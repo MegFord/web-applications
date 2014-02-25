@@ -223,8 +223,8 @@ class Tokenizer:
                 word = "username " + word
             elif hashtag_re.search(word):
                 word = "hashtag " + word
-            elif hashtag_re.search(word):
-                word = "hashtag " + word
+            elif sentence_end_re.search(word):
+                word = "sentenceend " + word
             return word.lower()
 
 ###############################################################################
