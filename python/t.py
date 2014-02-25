@@ -135,7 +135,7 @@ word_re = re.compile(r"""(%s)""" % "|".join(regex_strings), re.VERBOSE | re.I | 
 emoticon_re = re.compile(regex_strings[1], re.VERBOSE | re.I | re.UNICODE)
 username_re = re.compile(regex_strings[3], re.VERBOSE | re.I | re.UNICODE)
 hashtag_re = re.compile(regex_strings[4], re.VERBOSE | re.I | re.UNICODE)
-sentence_end_re = re.compile(regex_strings[4], re.VERBOSE | re.I | re.UNICODE)
+sentence_end_re = re.compile(regex_strings[5], re.VERBOSE | re.I | re.UNICODE)
 
 # These are for regularizing HTML entities to Unicode:
 html_entity_digit_re = re.compile(r"&#\d+;")
@@ -217,11 +217,15 @@ class Tokenizer:
     def replace_special(self, word):
         if emoticon_re.search(word):
             word = "emoticon " + word
-        elif username_re.search(word):
-            word = "username " + word
-        elif hashtag_re.search(word):
-            word = "hashtag " + word
-        return word.lower()
+            return word
+        else 
+            if username_re.search(word):
+                word = "username " + word
+            elif hashtag_re.search(word):
+                word = "hashtag " + word
+            elif hashtag_re.search(word):
+                word = "hashtag " + word
+            return word.lower()
 
 ###############################################################################
 
