@@ -77,7 +77,7 @@ emoticon_string = r"""
     )"""
 username_string = r"""(?:@[\w_]+)"""
 hashtag_string = r"""(?:\#+[\w_]+[\w\'_\-]*[\w_]+)"""
-sentence_end =  r"""(?:[a-z\.\?!])""" 
+sentence_end =  r"""(?:[a-z]+[\.\?!])""" 
 # The components of the tokenizer:
 regex_strings = (
     # Phone numbers:
@@ -218,7 +218,7 @@ class Tokenizer:
         if emoticon_re.search(word):
             word = "emoticon " + word
             return word
-        else 
+        else: 
             if username_re.search(word):
                 word = "username " + word
             elif hashtag_re.search(word):
@@ -231,7 +231,7 @@ class Tokenizer:
 
 if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
-    samples = open("20120101.txt")
+    samples = open("w")
     i = 0
     ngram = {}
     hash_gram = ""
