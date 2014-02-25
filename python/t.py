@@ -239,11 +239,11 @@ if __name__ == '__main__':
                 if l == -1:
                     hash_gram = "1gram"
                 else:
-                    hash_gram = hash_gram.replace(replace_num, num)
+                    hash_gram = hash_gram.replace(replace_num, num, 1)
                 hash_gram += "\t" + tokenized[j]
+                print hash_gram
                 if hash_gram in ngram.keys():
                     ngram[hash_gram] += 1
                 else:
                     ngram[hash_gram] = 1
-            print "\n"
             hash_gram = ""
