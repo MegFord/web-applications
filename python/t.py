@@ -77,7 +77,7 @@ emoticon_string = r"""
     )"""
 username_string = r"""(?:@[\w_]+)"""
 hashtag_string = r"""(?:\#+[\w_]+[\w\'_\-]*[\w_]+)"""
-sentence_end =  r"""(?:[a-z][a-z'\-_]+[a-z])""" 
+sentence_end =  r"""(?:[a-z\.\?!])""" 
 # The components of the tokenizer:
 regex_strings = (
     # Phone numbers:
