@@ -68,7 +68,8 @@ emoticon_string = r"""
       [<>]?
       [:;=8]                     # eyes
       [\-o\*\']?                 # optional nose
-      [\)\]\(\[dDpP/\:\}\{@\|\\] # mouth      
+      [\)\]\(\[dDpP/\:\}\{@\|\\] # mouth  
+      (?![/])   
       |
       [\)\]\(\[dDpP/\:\}\{@\|\\] # mouth
       [\-o\*\']?                 # optional nose
@@ -77,7 +78,8 @@ emoticon_string = r"""
     )"""
 username_string = r"""(?:@[\w_]+)"""
 hashtag_string = r"""(?:\#+[\w_]+[\w\'_\-]*[\w_]+)"""
-sentence_end =  r"""(?:[a-z]+[\.\?!])""" 
+sentence_end =  r"""(?:[a-z]+[\.\?!]+[ ])""" 
+url_string =  r"""(?:[htp]+[s]?[:/]+[a-z]+[\w\d\.a-z/\?\=\&]*)""" 
 # The components of the tokenizer:
 regex_strings = (
     # Phone numbers:
@@ -112,6 +114,9 @@ regex_strings = (
     # Last word in a sentence
     sentence_end
     ,
+    #url
+    url_string
+    ,
     # Remaining word types:
     r"""
     (?:[a-z][a-z'\-_]+[a-z])       # Words with apostrophes or dashes.
@@ -121,8 +126,8 @@ regex_strings = (
     (?:[\w_]+)                     # Words without apostrophes or dashes.
     |
     (?:\.(?:\s*\.){1,})            # Ellipsis dots. 
-    |
-    (?:\S)                          Everything else that isn't whitespace.
+    #|
+    #(?:\S)                         # Everything else that isn't whitespace.
     """
     )
 
@@ -136,6 +141,7 @@ emoticon_re = re.compile(regex_strings[1], re.VERBOSE | re.I | re.UNICODE)
 username_re = re.compile(regex_strings[3], re.VERBOSE | re.I | re.UNICODE)
 hashtag_re = re.compile(regex_strings[4], re.VERBOSE | re.I | re.UNICODE)
 sentence_end_re = re.compile(regex_strings[5], re.VERBOSE | re.I | re.UNICODE)
+url_re = re.compile(regex_strings[6], re.VERBOSE | re.I | re.UNICODE)
 
 # These are for regularizing HTML entities to Unicode:
 html_entity_digit_re = re.compile(r"&#\d+;")
@@ -225,6 +231,8 @@ class Tokenizer:
                 word = "hashtag " + word
             elif sentence_end_re.search(word):
                 word = "sentenceend " + word
+            elif url_re.search(word):
+                word = "url " + word
             return word.lower()
 
 ###############################################################################
