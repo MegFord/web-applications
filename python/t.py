@@ -136,7 +136,7 @@ regex_strings = (
     
 word_re = re.compile(r"""(%s)""" % "|".join(regex_strings), re.VERBOSE | re.I | re.UNICODE)
 
-# The emoticon string gets its own regex so that we can preserve case for them as needed:
+# The special strings gets their own regexes so that we can tag them as needed:
 emoticon_re = re.compile(regex_strings[1], re.VERBOSE | re.I | re.UNICODE)
 username_re = re.compile(regex_strings[3], re.VERBOSE | re.I | re.UNICODE)
 hashtag_re = re.compile(regex_strings[4], re.VERBOSE | re.I | re.UNICODE)
