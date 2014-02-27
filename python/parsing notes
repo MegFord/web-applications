@@ -1,0 +1,20 @@
+ngrams 
+keep: hashtag, words
+replace: (1st pass) url, (2nd pass) emoticons, (3rd pass) username, 
+remove: punctuation
+write out in json
+
+store info {2gram: [{"word: word1": count}]}, { 3grams: ["word: word1, word2.....
+
+Research
+use probability sentence given language -- words for crime comments sections in news stories 
+parse and compare to tweets
+
+youtube videos and comments
+interact with google maps api 
+
+Andrew python reads news from npr ask if reads comments
+Reads from NYT Mike Yacobucci
+Chicago, LA Times 
+
+
