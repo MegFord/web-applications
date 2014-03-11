@@ -46,8 +46,9 @@ __email__ = "See the author's website"
 
 ######################################################################
 
-import re
+import collections
 import htmlentitydefs
+import re
 
 ######################################################################
 # The following strings are components in the regular expression
@@ -68,8 +69,7 @@ emoticon_string = r"""
       [<>]?
       [:;=8]                     # eyes
       [\-o\*\']?                 # optional nose
-      [\)\]\(\[dDpP/\:\}\{@\|\\] # mouth  
-      (?![/])   
+      [\)\]\(\[dDpP/\:\}\{@\|\\] # mouth    
       |
       [\)\]\(\[dDpP/\:\}\{@\|\\] # mouth
       [\-o\*\']?                 # optional nose
@@ -79,7 +79,7 @@ emoticon_string = r"""
 username_string = r"""(?:@[\w_]+)"""
 hashtag_string = r"""(?:\#+[\w_]+[\w\'_\-]*[\w_]+)"""
 sentence_end =  r"""(?:[a-z]+[\.\?!]+[ ])""" 
-url_string =  r"""(?:[htp]+[s]?[:/]+[a-z]+[\w\d\.a-z/\?\=\&]*)""" 
+url_string =  r"""(?:[htp]+[s]?[:/]+[a-z0-9]+[\w\d\.a-z/\?\=\&\-]*)""" 
 # The components of the tokenizer:
 regex_strings = (
     # Phone numbers:
@@ -126,8 +126,8 @@ regex_strings = (
     (?:[\w_]+)                     # Words without apostrophes or dashes.
     |
     (?:\.(?:\s*\.){1,})            # Ellipsis dots. 
-    #|
-    #(?:\S)                         # Everything else that isn't whitespace.
+    | 
+    (?:\S)                         # Everything else that isn't whitespace.
     """
     )
 
@@ -221,27 +221,30 @@ class Tokenizer:
         return s
        
     def replace_special(self, word):
-        if emoticon_re.search(word):
-            word = "emoticon " + word
-            return word
-        else: 
-            if username_re.search(word):
-                word = "username " + word
-            elif hashtag_re.search(word):
-                word = "hashtag " + word
-            elif sentence_end_re.search(word):
-                word = "sentenceend " + word
-            elif url_re.search(word):
-                word = "url " + word
-            return word.lower()
+        if url_re.search(word):
+            word = "url " #+ word
+        elif emoticon_re.search(word):
+            word = "emoticon " # +word (for testing)
+        elif username_re.search(word):
+            word = "username " #+ word
+        elif hashtag_re.search(word):
+            word = "hashtag " #+ word
+        elif sentence_end_re.search(word):
+            word = word
+        return word.lower()
+
+    def ngram(): 
+        return collections.defaultdict(ngram)
 
 ###############################################################################
-
+# up to 3grams must read output and output probability 
+# the dog P(w2 | w1) the dog laughs P(w3 |w2, w1)
+# P(w1|w-1, w0), * P(w2|w1, w0) symbols: stop and start and replace -1 and end word etc with symbols
+# p(the dog laughs) /p(the dog)
 if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
     samples = open("w")
     i = 0
-    ngram = {}
     hash_gram = ""
     length = "gram"
     for s in samples: 
@@ -254,13 +257,17 @@ if __name__ == '__main__':
                 #delete the old ngram name or the \t
                 l = hash_gram.find("gram")
                 if l == -1:
-                    hash_gram = "1gram"
+                    hash_gram = num + " gram"
                 else:
                     hash_gram = hash_gram.replace(replace_num, num, 1)
-                hash_gram += "\t" + tokenized[j]
+                ngram_string += "\t" + tokenized[j]
                 print hash_gram
                 if hash_gram in ngram.keys():
-                    ngram[hash_gram] += 1
+                    #if ngram_string in hash_gram.keys():
+                   # ngram[hash_gram] += 1
+                   
+                        
                 else:
-                    ngram[hash_gram] = 1
+                    hash_gram = ngram()
+                        
             hash_gram = ""
