@@ -241,10 +241,12 @@ class Tokenizer:
 # the dog P(w2 | w1) the dog laughs P(w3 |w2, w1)
 # P(w1|w-1, w0), * P(w2|w1, w0) symbols: stop and start and replace -1 and end word etc with symbols
 # p(the dog laughs) /p(the dog)
+
 if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
-    samples = open("w")
+    samples = open("20120101.txt")
     i = 0
+    ngram = {}
     hash_gram = ""
     length = "gram"
     for s in samples: 
@@ -257,17 +259,13 @@ if __name__ == '__main__':
                 #delete the old ngram name or the \t
                 l = hash_gram.find("gram")
                 if l == -1:
-                    hash_gram = num + " gram"
+                    hash_gram = "1gram"
                 else:
                     hash_gram = hash_gram.replace(replace_num, num, 1)
-                ngram_string += "\t" + tokenized[j]
+                hash_gram += "\t" + tokenized[j]
                 print hash_gram
                 if hash_gram in ngram.keys():
-                    #if ngram_string in hash_gram.keys():
-                   # ngram[hash_gram] += 1
-                   
-                        
+                    ngram[hash_gram] += 1
                 else:
-                    hash_gram = ngram()
-                        
+                    ngram[hash_gram] = 1
             hash_gram = ""
