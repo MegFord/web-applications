@@ -47,6 +47,7 @@ __email__ = "See the author's website"
 ######################################################################
 
 import collections
+from collections import defaultdict
 import htmlentitydefs
 import re
 
@@ -233,9 +234,6 @@ class Tokenizer:
             word = word
         return word.lower()
 
-    def ngram(): 
-        return collections.defaultdict(ngram)
-
 ###############################################################################
 # up to 3grams must read output and output probability 
 # the dog P(w2 | w1) the dog laughs P(w3 |w2, w1)
@@ -246,26 +244,20 @@ if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
     samples = open("20120101.txt")
     i = 0
-    ngram = {}
+    ngram = {} 
+    num = 3
+    num = ["1gram", "2gram", "3gram"]
     hash_gram = ""
     length = "gram"
     for s in samples: 
         tokenized = tok.tokenize(s)
         print tokenized      
         for i in range(len(tokenized)):
-            for j in range(i, len(tokenized)):
-                num = str(j - i + 1)
-                replace_num = str(j - i)
-                #delete the old ngram name or the \t
-                l = hash_gram.find("gram")
-                if l == -1:
-                    hash_gram = "1gram"
-                else:
-                    hash_gram = hash_gram.replace(replace_num, num, 1)
+            for j in range(i, 3):
+                num = str(j - i + 1) + "gram"
                 hash_gram += "\t" + tokenized[j]
-                print hash_gram
-                if hash_gram in ngram.keys():
-                    ngram[hash_gram] += 1
-                else:
-                    ngram[hash_gram] = 1
-            hash_gram = ""
+                d = ngram[num]
+                print d
+                d[hash_gram] = d.get(hash_gram, 0) + 1
+                print ngram.items()    
+            hash_gram  = ""
