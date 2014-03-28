@@ -233,6 +233,22 @@ class Tokenizer:
         elif sentence_end_re.search(word):
             word = word
         return word.lower()
+        
+    def loop(self, samples, num):
+        n_list = []
+        for s in samples: 
+            tokenized = tok.tokenize("* * "+s+"~STOP~")    
+            for i in range(len(tokenized)-(num-1)):
+                hash_gram = "_".join(tokenized[i:i+num])
+                n_list.append(hash_gram)
+        return n_list
+        
+    def count_gram(self, ngram_list):
+        hash_gram = {}
+        for gram in ngram_list:
+            hash_gram[gram] = hash_gram.get(gram, 0) + 1
+        return hash_gram
+            
 
 ###############################################################################
 # up to 3grams must read output and output probability 
@@ -243,21 +259,6 @@ class Tokenizer:
 if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
     samples = open("20120101.txt")
-    i = 0
-    ngram = {} 
-    num = 3
-    num = ["1gram", "2gram", "3gram"]
-    hash_gram = ""
-    length = "gram"
-    for s in samples: 
-        tokenized = tok.tokenize(s)
-        print tokenized      
-        for i in range(len(tokenized)):
-            for j in range(i, 3):
-                num = str(j - i + 1) + "gram"
-                hash_gram += "\t" + tokenized[j]
-                d = ngram[num]
-                print d
-                d[hash_gram] = d.get(hash_gram, 0) + 1
-                print ngram.items()    
-            hash_gram  = ""
+    ngrams= tok.loop(samples, 2)
+    print ngrams
+    print tok.count_gram(ngrams)
