@@ -233,7 +233,8 @@ class Tokenizer:
         elif sentence_end_re.search(word):
             word = word
         return word.lower()
-        
+
+class NGram_Helpers:       
     def loop(self, samples, num):
         n_list = []
         for s in samples: 
@@ -248,8 +249,24 @@ class Tokenizer:
         for gram in ngram_list:
             hash_gram[gram] = hash_gram.get(gram, 0) + 1
         return hash_gram
-            
 
+    def r_gram(self, r_gram_list, l_string):
+        perplexity = 0.0
+        perplexity_div = 0.0
+        for g in r_gram_list:
+             if l_string in r_gram_list.keys():
+                 perplexity += 1.0
+        print perplexity
+        h_string = l_string.split("_")
+        print h_string[0]
+        for g in r_gram_list:
+            if h_string[0] in r_gram_list.keys():
+                perplexity_div += 1.0
+        if perplexity_div != 0.0:
+            per = perplexity/perplexity_div
+        else: 
+            per = 0.0
+        return per
 ###############################################################################
 # up to 3grams must read output and output probability 
 # the dog P(w2 | w1) the dog laughs P(w3 |w2, w1)
@@ -259,6 +276,10 @@ class Tokenizer:
 if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
     samples = open("20120101.txt")
-    ngrams= tok.loop(samples, 2)
+    n = NGram_Helpers()
+    ngrams= n.loop(samples, 2)
     print ngrams
-    print tok.count_gram(ngrams)
+    t_grams = n.count_gram(ngrams)
+    print t_grams
+    p = n.r_gram(t_grams, 2, "its_nothing")
+    print p
