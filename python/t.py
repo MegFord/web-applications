@@ -277,9 +277,14 @@ if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
     samples = open("20120101.txt")
     n = NGram_Helpers()
-    ngrams= n.loop(samples, 2)
-    print ngrams
+    n_length = 3
+    ngrams = {}
+    for i in range(1, n_length):
+        ngram_name = str(i) + "gram"
+        print ngram_name + "\n"
+        ngrams[ngram_name] = n.loop(samples, i)
+        print ngrams.get(ngram_name)
     t_grams = n.count_gram(ngrams)
-    print t_grams
-    p = n.r_gram(t_grams, 2, "its_nothing")
-    print p
+    #print t_grams
+    p = n.r_gram(t_grams, "its_nothing")
+    #print p
