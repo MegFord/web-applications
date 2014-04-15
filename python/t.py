@@ -80,7 +80,7 @@ emoticon_string = r"""
 username_string = r"""(?:@[\w_]+)"""
 hashtag_string = r"""(?:\#+[\w_]+[\w\'_\-]*[\w_]+)"""
 sentence_end =  r"""(?:[a-z]+[\.\?!]+[ ])""" 
-url_string =  r"""(?:[htp]+[s]?[:/]+[a-z0-9]+[\w\d\.a-z/\?\=\&\-]*)""" 
+url_string =  r"""(?:[htp]+[s]?[:/]+[a-z0-9]+[\w\d\.a-z/\?\=\&%\-]*)""" 
 # The components of the tokenizer:
 regex_strings = (
     # Phone numbers:
@@ -127,8 +127,8 @@ regex_strings = (
     (?:[\w_]+)                     # Words without apostrophes or dashes.
     |
     (?:\.(?:\s*\.){1,})            # Ellipsis dots. 
-    | 
-    (?:\S)                         # Everything else that isn't whitespace.
+    #| 
+    #(?:\S)                         # Everything else that isn't whitespace.
     """
     )
 
@@ -236,9 +236,11 @@ class Tokenizer:
 
 class NGram_Helpers:       
     def loop(self, samples, num):
-        n_list = []
-        for s in samples: 
-            tokenized = tok.tokenize("* * "+s+"~STOP~")    
+        n_list = []    
+        for s in samples:
+            tokenized = ["*", "*"] 
+            tokenized += tok.tokenize(s)
+            tokenized += ["~STOP~"]    
             for i in range(len(tokenized)-(num-1)):
                 hash_gram = "_".join(tokenized[i:i+num])
                 n_list.append(hash_gram)
@@ -279,12 +281,12 @@ if __name__ == '__main__':
     n = NGram_Helpers()
     n_length = 3
     ngrams = {}
-    for i in range(1, n_length):
-        ngram_name = str(i) + "gram"
-        print ngram_name + "\n"
-        ngrams[ngram_name] = n.loop(samples, i)
-        print ngrams.get(ngram_name)
+    #for i in range(1, n_length):
+    ngram_name = "2gram"
+        #print ngram_name + "\n"
+    ngrams[ngram_name] = n.loop(samples, 2)
+    print ngrams.get(ngram_name)
     t_grams = n.count_gram(ngrams)
-    #print t_grams
+    print t_grams
     p = n.r_gram(t_grams, "its_nothing")
     #print p
