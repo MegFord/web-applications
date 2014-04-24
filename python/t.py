@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import division
 
 """
 This code implements a basic, Twitter-aware tokenizer.
@@ -50,6 +51,9 @@ import collections
 from collections import defaultdict
 import htmlentitydefs
 import re
+import operator
+
+
 
 ######################################################################
 # The following strings are components in the regular expression
@@ -237,42 +241,53 @@ class Tokenizer:
 class NGram_Helpers:       
     def loop(self, samples, num):
         n_list = []    
+        hash_dict = {}
         for s in samples:
-            tokenized = ["*", "*"] 
-            tokenized += tok.tokenize(s)
-            tokenized += ["~STOP~"]    
-            for i in range(len(tokenized)-(num-1)):
-                hash_gram = "_".join(tokenized[i:i+num])
-                n_list.append(hash_gram)
-        return n_list
+           n_list = n.build_tweet(s, num)
+           n_list = n.build_ngrams(n_list, num)
+           hash_dict.update(n.count_gram(n_list))
+        return hash_dict
+
+    def build_tweet(self, s, num):
+        tokenized = []
+        for i in range(0, num - 1):
+           tokenized += ["*"]
+        tokenized += tok.tokenize(s)
+        tokenized += ["~STOP~"]    
+        return tokenized
+
+    def build_ngrams(self, tokenized, num):
+        hash_list = [] 
+        for i in range(len(tokenized)-(num-1)):
+    	   hash_gram = "_".join(tokenized[i:i+num])
+           hash_list.append(hash_gram)
+        return hash_list
         
     def count_gram(self, ngram_list):
         hash_gram = {}
         for gram in ngram_list:
-            hash_gram[gram] = hash_gram.get(gram, 0) + 1
+           hash_gram[gram] = hash_gram.get(gram, 0) + 1
         return hash_gram
 
-    def r_gram(self, r_gram_list, l_string):
-        perplexity = 0.0
-        perplexity_div = 0.0
-        for g in r_gram_list:
-             if l_string in r_gram_list.keys():
-                 perplexity += 1.0
-        print perplexity
-        h_string = l_string.split("_")
-        print h_string[0]
-        for g in r_gram_list:
-            if h_string[0] in r_gram_list.keys():
-                perplexity_div += 1.0
-        if perplexity_div != 0.0:
-            per = perplexity/perplexity_div
-        else: 
-            per = 0.0
-        return per
+    def pr_gram(self, r_gram_dict, string_input):
+        probability = 0.0
+        probablity_list = []
+        for i in string_input:
+	   if i in r_gram_dict:
+              probability = r_gram_dict.get(i)
+              #print probability
+              probablity_list.append(probability)
+        return probablity_list
+
+    def probability(self, prob, probability_div):
+        #return reduce(operator.imul, map(operator.idiv, prob,probability_div))
+        feq = [x/y for x, y in zip(prob,probability_div)]
+        reduce(operator.imul, feq)
+
 ###############################################################################
 # up to 3grams must read output and output probability 
 # the dog P(w2 | w1) the dog laughs P(w3 |w2, w1)
-# P(w1|w-1, w0), * P(w2|w1, w0) symbols: stop and start and replace -1 and end word etc with symbols
+# P(w1|w-1, w0), * P(w2|w1, w0) symbols: stop and start anfor i ind replace -1 and end word etc with symbols
 # p(the dog laughs) /p(the dog)
 
 if __name__ == '__main__':
@@ -280,13 +295,36 @@ if __name__ == '__main__':
     samples = open("20120101.txt")
     n = NGram_Helpers()
     n_length = 3
-    ngrams = {}
+    three_gram = {}
+    two_gram = {}
+    input_three_gram = {}
+    input_two_gram = {}
+    input_two_list = [] 
+    input_three_list = [] 
+    prob_three_list = []
+    prob_two_list = []
     #for i in range(1, n_length):
-    ngram_name = "2gram"
         #print ngram_name + "\n"
-    ngrams[ngram_name] = n.loop(samples, 2)
-    print ngrams.get(ngram_name)
-    t_grams = n.count_gram(ngrams)
-    print t_grams
-    p = n.r_gram(t_grams, "its_nothing")
-    #print p
+    three_gram = n.loop(samples, 3)
+    #for i in three_gram:[x/y for x, y in zip(a, b)]
+       #print i
+    samples = open("20120101.txt")
+    two_gram = n.loop(samples, 2)
+    #for x in two_gram:
+       #print x
+    line = raw_input('Enter a sentence:')
+    line_copy = line
+    input_three_list = n.build_tweet(line, 3)
+    input_three_list = n.build_ngrams(input_two_list, 3)
+    #print line_copy
+    for x in input_three_list:
+       print x
+    input_two_list = n.build_tweet(line_copy, 2)
+    input_two_list = n.build_ngrams(input_two_list, 2)
+    #for l in input_two_list:
+       #print l
+    
+    prob_list = n.pr_gram(three_gram, input_three_list)
+    prob_two_list = n.pr_gram(two_gram, input_two_list)
+    #pr = n.probability(prob_list, prob_two_list)
+    #print pr
