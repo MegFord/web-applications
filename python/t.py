@@ -303,7 +303,7 @@ if __name__ == '__main__':
     input_three_gram = {}
     input_two_gram = {}
     input_two_list = [] 
-    input_three_list = [] bed_~STOP~
+    input_three_list = [] 
 
     prob_three_list = []
     prob_two_list = []
