@@ -319,7 +319,7 @@ if __name__ == '__main__':
     line = raw_input('Enter a sentence:')
     line_copy = line
     input_three_list = n.build_tweet(line, 3)
-    input_three_list = n.build_ngrams(input_two_list, 3)
+    input_three_list = n.build_ngrams(input_three_list, 3)
     #print line_copy
     for x in input_three_list:
        print x
