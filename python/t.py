@@ -262,6 +262,8 @@ class NGram_Helpers:
         for i in range(len(tokenized)-(num-1)):
     	   hash_gram = "_".join(tokenized[i:i+num])
            hash_list.append(hash_gram)
+        for gram in hash_list:
+           print hash_list.get(gram)
         return hash_list
         
     def count_gram(self, ngram_list):
