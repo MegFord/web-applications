@@ -278,7 +278,8 @@ class NGram_Helpers:
         for i in string_input:
 	   if i in r_gram_dict:
               probability = r_gram_dict.get(i)
-              #print probability
+           else 
+              probability = 0
               probablity_list.append(probability)
         return probablity_list
 
