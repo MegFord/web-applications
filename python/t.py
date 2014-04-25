@@ -253,7 +253,8 @@ class NGram_Helpers:
         for i in range(0, num - 1):
            tokenized += ["*"]
         tokenized += tok.tokenize(s)
-        tokenized += ["~STOP~"]    
+        tokenized += ["~STOP~"] 
+        print tokenized   
         return tokenized
 
     def build_ngrams(self, tokenized, num):
@@ -300,7 +301,8 @@ if __name__ == '__main__':
     input_three_gram = {}
     input_two_gram = {}
     input_two_list = [] 
-    input_three_list = [] 
+    input_three_list = [] bed_~STOP~
+
     prob_three_list = []
     prob_two_list = []
     #for i in range(1, n_length):
