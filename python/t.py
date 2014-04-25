@@ -323,7 +323,7 @@ if __name__ == '__main__':
     #print line_copy
     for x in input_three_list:
        print x
-    input_two_list = n.build_tweet(line_input, 2)
+    input_two_list = n.build_tweet(line_copy, 2)
     input_two_list = n.build_ngrams(input_two_list, 2)
     for l in input_two_list:
        print l
