@@ -284,7 +284,7 @@ class NGram_Helpers:
         return probablity_list
 
     def probability(self, prob, probability_div):
-        #return reduce(operator.imul, map(operator.idiv, prob,probability_div))
+        #needs to deal with div by zero
         feq = [x/y for x, y in zip(prob,probability_div)]
         return reduce(operator.imul, feq)
     
