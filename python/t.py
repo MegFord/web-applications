@@ -279,12 +279,11 @@ class NGram_Helpers:
 	   if i in r_gram_dict:
               probability = r_gram_dict.get(i)
            else: 
-              probability = 0
+              probability = 0 # implement smoothing so we don't end up with div by zero
               probablity_list.append(probability)
         return probablity_list
 
     def probability(self, prob, probability_div):
-        #needs to deal with div by zero
         feq = [x/y for x, y in zip(prob,probability_div)]
         return reduce(operator.imul, feq)
     
