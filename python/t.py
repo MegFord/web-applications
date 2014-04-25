@@ -326,7 +326,7 @@ if __name__ == '__main__':
     input_two_list = n.build_tweet(line_input, 2)
     input_two_list = n.build_ngrams(input_two_list, 2)
     for l in input_two_list:
-       #print l
+       print l
     
     prob_list = n.pr_gram(three_gram, input_three_list)
     prob_two_list = n.pr_gram(two_gram, input_two_list)
