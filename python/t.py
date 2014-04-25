@@ -285,7 +285,8 @@ class NGram_Helpers:
     def probability(self, prob, probability_div):
         #return reduce(operator.imul, map(operator.idiv, prob,probability_div))
         feq = [x/y for x, y in zip(prob,probability_div)]
-        reduce(operator.imul, feq)
+        return reduce(operator.imul, feq)
+    
 
 ###############################################################################
 # up to 3grams must read output and output probability 
