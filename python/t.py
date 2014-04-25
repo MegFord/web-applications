@@ -329,6 +329,10 @@ if __name__ == '__main__':
        print l
     
     prob_list = n.pr_gram(three_gram, input_three_list)
+    for k in prob_list:
+       print k
     prob_two_list = n.pr_gram(two_gram, input_two_list)
+    for f in prob_two_list:
+       print f
     pr = n.probability(prob_list, prob_two_list)
     print pr
