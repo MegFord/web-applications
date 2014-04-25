@@ -306,8 +306,8 @@ if __name__ == '__main__':
     #for i in range(1, n_length):
         #print ngram_name + "\n"
     three_gram = n.loop(samples, 3)
-    #for i in three_gram:[x/y for x, y in zip(a, b)]
-       #print i
+    for i in three_gram:
+       print i
     samples = open("20120101.txt")
     two_gram = n.loop(samples, 2)
     #for x in two_gram:
