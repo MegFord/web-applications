@@ -50,10 +50,11 @@ __email__ = "See the author's website"
 import collections
 from collections import defaultdict
 import htmlentitydefs
-import re
 import operator
-
-
+import os
+from os import listdir
+from os.path import isfile, join
+import re
 
 ######################################################################
 # The following strings are components in the regular expression
@@ -243,50 +244,60 @@ class NGram_Helpers:
         n_list = []    
         hash_dict = {}
         for s in samples:
-           n_list = n.build_tweet(s, num)
-           n_list = n.build_ngrams(n_list, num)
-           hash_dict.update(n.count_gram(n_list))
+            n_list = n.build_tweet(s, num)
+            n_list = n.build_ngrams(n_list, num)
+            hash_dict.update(n.count_gram(n_list))
         return hash_dict
 
     def build_tweet(self, s, num):
         tokenized = []
         for i in range(0, num - 1):
-           tokenized += ["*"]
+            tokenized += ["*"]
         tokenized += tok.tokenize(s)
-        tokenized += ["~STOP~"] 
-        print tokenized   
+        tokenized += ["~STOP~"]  
         return tokenized
 
     def build_ngrams(self, tokenized, num):
         hash_list = [] 
         for i in range(len(tokenized)-(num-1)):
-    	   hash_gram = "_".join(tokenized[i:i+num])
-           hash_list.append(hash_gram)
-        for gram in hash_list:
-           print gram
+    	    hash_gram = "_".join(tokenized[i:i+num])
+            hash_list.append(hash_gram)
         return hash_list
         
     def count_gram(self, ngram_list):
         hash_gram = {}
         for gram in ngram_list:
-           hash_gram[gram] = hash_gram.get(gram, 0) + 1
+            hash_gram[gram] = hash_gram.get(gram, 0) + 1
         return hash_gram
 
     def pr_gram(self, r_gram_dict, string_input):
         probability = 0.0
         probablity_list = []
         for i in string_input:
-	   if i in r_gram_dict:
+           if i in r_gram_dict:
               probability = r_gram_dict.get(i)
-           else: 
-              probability = 0 # implement smoothing so we don't end up with div by zero
-              probablity_list.append(probability)
+           else:
+              probability = 5 # implement smoothing so we don't end up with div by zero
+           probablity_list.append(probability)
         return probablity_list
 
     def probability(self, prob, probability_div):
         feq = [x/y for x, y in zip(prob,probability_div)]
         return reduce(operator.imul, feq)
-    
+
+class File_Utils:
+    def crawl_directory(self):
+        file_group = []
+        tweet_path = os.path.join(os.path.expanduser("~"),"Tweets")
+        file_group = [f for f in os.listdir(tweet_path) if os.path.isfile(os.path.join(tweet_path, f))] 
+        return file_group
+     
+    def create_samples(self, file_group):
+        samples = [] 
+        tweet_path = os.path.join(os.path.expanduser("~"),"Tweets")  
+        for tweet_file in file_group:
+            samples.extend(open(os.path.join(tweet_path, tweet_file)))
+        return samples
 
 ###############################################################################
 # up to 3grams must read output and output probability 
@@ -296,8 +307,13 @@ class NGram_Helpers:
 
 if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
-    samples = open("20120101.txt")
     n = NGram_Helpers()
+    fi = File_Utils()
+
+    samples = []
+    file_group = fi.crawl_directory()
+    samples = fi.create_samples(file_group)
+        
     n_length = 3
     three_gram = {}
     two_gram = {}
@@ -305,7 +321,6 @@ if __name__ == '__main__':
     input_two_gram = {}
     input_two_list = [] 
     input_three_list = [] 
-
     prob_three_list = []
     prob_two_list = []
     #for i in range(1, n_length):
@@ -313,7 +328,6 @@ if __name__ == '__main__':
     three_gram = n.loop(samples, 3)
     for i in three_gram:
        print i
-    samples = open("20120101.txt")
     two_gram = n.loop(samples, 2)
     #for x in two_gram:
        #print x
