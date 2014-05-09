@@ -262,14 +262,14 @@ class NGram_Helpers:
         for i in range(len(tokenized)-(num-1)):
     	    hash_gram = "_".join(tokenized[i:i+num])
             hash_list.append(hash_gram)
-            #print hash_list.count(hash_gram)
+            print hash_list.count(hash_gram)
         return hash_list
         
     def count_gram(self, ngram_list, hash_gram):
         for gram in ngram_list:
             print gram
             hash_gram[gram] = hash_gram.get(gram, 0) + 1
-            #print hash_gram.get(gram)
+            print hash_gram.get(gram)
         return hash_gram
 
     def pr_gram(self, r_gram_dict, string_input):
@@ -284,11 +284,11 @@ class NGram_Helpers:
         return count_list
 
     def probability(self, count_ngram, count_n_1_grams):
-        feq = [self.get_ratio(x,y) for x, y in zip(count_ngram,count_n_1_grams)]
+        feq = [get_ratio(x/y) for x, y in zip(count_ngram,count_n_1_grams)]
         return reduce(operator.imul, feq)
 
 
-    def get_ratio(self,x,y):
+    def get_ration(x,y):
         if x==0.0 :
             if y==0.0:
                 return 1.0/10000000.0 #very small chance of it ocurring
@@ -296,7 +296,7 @@ class NGram_Helpers:
                 return 1.0/(2*y) #smaller than most.
         else:
             return x/y
-
+            
 class File_Utils:
     def crawl_directory(self):
         file_group = []
