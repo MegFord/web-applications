@@ -246,7 +246,7 @@ class NGram_Helpers:
         for s in samples:
             n_list = n.build_tweet(s, num)
             n_list = n.build_ngrams(n_list, num)
-            hash_dict.update(n.count_gram(n_list))
+            hash_dict.update(n.count_gram(n_list, hash_dict))
         return hash_dict
 
     def build_tweet(self, s, num):
@@ -262,12 +262,14 @@ class NGram_Helpers:
         for i in range(len(tokenized)-(num-1)):
     	    hash_gram = "_".join(tokenized[i:i+num])
             hash_list.append(hash_gram)
+            print hash_list.count(hash_gram)
         return hash_list
         
-    def count_gram(self, ngram_list):
-        hash_gram = {}
+    def count_gram(self, ngram_list, hash_gram):
         for gram in ngram_list:
+            print gram
             hash_gram[gram] = hash_gram.get(gram, 0) + 1
+            print hash_gram.get(gram)
         return hash_gram
 
     def pr_gram(self, r_gram_dict, string_input):
@@ -276,6 +278,7 @@ class NGram_Helpers:
         for i in string_input:
            if i in r_gram_dict:
               probability = r_gram_dict.get(i)
+              print probability
            else:
               probability = 5 # implement smoothing so we don't end up with div by zero
            probablity_list.append(probability)
@@ -297,6 +300,8 @@ class File_Utils:
         tweet_path = os.path.join(os.path.expanduser("~"),"Tweets")  
         for tweet_file in file_group:
             samples.extend(open(os.path.join(tweet_path, tweet_file)))
+        for t in samples:
+            print t
         return samples
 
 ###############################################################################
@@ -323,14 +328,11 @@ if __name__ == '__main__':
     input_three_list = [] 
     prob_three_list = []
     prob_two_list = []
-    #for i in range(1, n_length):
-        #print ngram_name + "\n"
     three_gram = n.loop(samples, 3)
-    for i in three_gram:
-       print i
     two_gram = n.loop(samples, 2)
-    #for x in two_gram:
-       #print x
+    for x in two_gram:
+       print x
+       #print two_gram.get(x)
     line = raw_input('Enter a sentence:')
     line_copy = line
     input_three_list = n.build_tweet(line, 3)
@@ -340,8 +342,8 @@ if __name__ == '__main__':
        print x
     input_two_list = n.build_tweet(line_copy, 2)
     input_two_list = n.build_ngrams(input_two_list, 2)
-    for l in input_two_list:
-       print l
+    #for l in input_two_list:
+       #print l
     
     prob_list = n.pr_gram(three_gram, input_three_list)
     for k in prob_list:
