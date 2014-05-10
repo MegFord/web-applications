@@ -240,13 +240,15 @@ class Tokenizer:
         return word.lower()
 
 class NGram_Helpers: 
-    def _init_(samples):
-        three_gram = n.loop(samples, 3)
-        two_gram = n.loop(samples, 2)
+    hash_dict = {}
+    
+    def _init_(self, samples):
+        three_gram = self.loop(samples, 3)
+        two_gram = self.loop(samples, 2)
+        one_gram = self.loop(samples, 2)
       
     def loop(self, samples, num):
         n_list = []    
-        hash_dict = {}
         for s in samples:
             n_list = self.build_tweet(s, num)
             n_list = self.build_ngrams(n_list, num)
@@ -325,12 +327,11 @@ class File_Utils:
 
 if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
-    n = NGram_Helpers()
     fi = File_Utils()
 
-    samples = []
     file_group = fi.crawl_directory()
     samples = fi.create_samples(file_group)
+    n = NGram_Helpers(samples)
         
     three_gram = {}
     two_gram = {}
