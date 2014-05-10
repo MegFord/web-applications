@@ -244,9 +244,9 @@ class NGram_Helpers:
         n_list = []    
         hash_dict = {}
         for s in samples:
-            n_list = n.build_tweet(s, num)
-            n_list = n.build_ngrams(n_list, num)
-            hash_dict.update(n.count_gram(n_list, hash_dict))
+            n_list = self.build_tweet(s, num)
+            n_list = self.build_ngrams(n_list, num)
+            hash_dict.update(self.count_gram(n_list, hash_dict))
         return hash_dict
 
     def build_tweet(self, s, num):
@@ -284,7 +284,7 @@ class NGram_Helpers:
         return count_list
 
     def probability(self, count_ngram, count_n_1_grams):
-        feq = [get_ratio(x/y) for x, y in zip(count_ngram,count_n_1_grams)]
+        feq = [self.get_ratio(x/y) for x, y in zip(count_ngram,count_n_1_grams)]
         return reduce(operator.imul, feq)
 
 
