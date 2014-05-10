@@ -239,7 +239,11 @@ class Tokenizer:
             word = word
         return word.lower()
 
-class NGram_Helpers:       
+class NGram_Helpers: 
+    def _init_(samples):
+        three_gram = n.loop(samples, 3)
+        two_gram = n.loop(samples, 2)
+      
     def loop(self, samples, num):
         n_list = []    
         hash_dict = {}
@@ -330,12 +334,7 @@ if __name__ == '__main__':
         
     three_gram = {}
     two_gram = {}
-    input_two_list = [] 
-    input_three_list = [] 
-    prob_three_list = []
-    prob_two_list = []
-    three_gram = n.loop(samples, 3)
-    two_gram = n.loop(samples, 2)
+
     for x in two_gram:
        print x
        #print two_gram.get(x)
