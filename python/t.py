@@ -328,11 +328,8 @@ if __name__ == '__main__':
     file_group = fi.crawl_directory()
     samples = fi.create_samples(file_group)
         
-    n_length = 3
     three_gram = {}
     two_gram = {}
-    input_three_gram = {}
-    input_two_gram = {}
     input_two_list = [] 
     input_three_list = [] 
     prob_three_list = []
