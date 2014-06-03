@@ -17,7 +17,7 @@ while url != '':
             elif l.find('page') > -1:
                 page_link[l] = page_link.get(l, 0) + 1
     for i, j in page_link.iteritems():
-        if j < 10:
+        if j < 10:facebook
             page_link[i] = page_link.get(i) + 8
             url = i
             print url
@@ -27,15 +27,16 @@ while url != '':
 with open('data.txt', 'w') as outfile:
     json.dump(url_storage, outfile)
 
-#oh why do you hang?
 for k, l in url_storage.iteritems():
     if l == 'place_holder_text':
         m = ''
         r  = requests.get(k)
         data = r.text
         soup = BeautifulSoup(data)
-        for div in soup.find_all('div', class_='msgtxt'):
-            m += div.p.string
-            url_storage[k] = url_storage.set(k, m)
+        for div in soup.find_all('div', { 'class' :'msgtxt'}):
+            for c in div.contents:
+                m += unicode(c)
+            print c
+            url_storage[k] = m
 with open('posts.txt', 'w') as outfile:
-    json.dump(url_storage, outfile)  
+    json.dump(url_storage, outfile)
