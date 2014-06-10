@@ -17,7 +17,7 @@ while url != '':
             elif l.find('page') > -1:
                 page_link[l] = page_link.get(l, 0) + 1
     for i, j in page_link.iteritems():
-        if j < 10:facebook
+        if j < 10
             page_link[i] = page_link.get(i) + 8
             url = i
             print url
