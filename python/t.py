@@ -242,7 +242,8 @@ class Tokenizer:
 
 class NGram_Helpers:   
     
-    hash_dict={}
+    hash_dict = {}
+    forum_dict = {}
         
     def __init__(self,samples):
         self.unigrams = self.loop(samples,1)
@@ -251,12 +252,14 @@ class NGram_Helpers:
         self.total_words = sum(self.unigrams.values())
         
     def loop(self, samples, num):
-        n_list = []    
+        n_list = []
+        n_dict = {}    
         for s in samples:
             n_list = self.build_tweet(s, num)
             n_list = self.build_ngrams(n_list, num)
             self.hash_dict.update(self.count_gram(n_list, self.hash_dict))
-        return self.hash_dict
+            n_dict.update(self.count_gram(n_list, n_dict))
+        return  n_dict
 
     def build_tweet(self, s, num):
         tokenized = []
@@ -266,19 +269,36 @@ class NGram_Helpers:
         tokenized += ["~STOP~"]  
         return tokenized
 
+    def build_forum(self, samples, num):
+        n_dict = {}
+        for s in samples:
+            parsed = []
+            for i in range(0, num - 1):
+                parsed += ["*"]
+            parsed += s.split()
+            parsed += ["~STOP~"]
+            #print parsed
+            parsed = self.build_ngrams(parsed, num)
+            #print parsed
+            self.forum_dict.update(self.count_gram(parsed, self.forum_dict))
+            n_dict.update(self.count_gram(parsed, n_dict))
+            print n_dict
+        return n_dict
+        
+        
     def build_ngrams(self, tokenized, num):
         hash_list = [] 
         for i in range(len(tokenized)-(num-1)):
     	    hash_gram = "_".join(tokenized[i:i+num])
             hash_list.append(hash_gram)
-            print hash_list.count(hash_gram)
+            #print hash_list.count(hash_gram)
         return hash_list
         
     def count_gram(self, ngram_list, hash_gram):
         for gram in ngram_list:
-            print gram
+            #print gram
             hash_gram[gram] = hash_gram.get(gram, 0) + 1
-            print hash_gram.get(gram)
+            #print hash_gram.get(gram)
         return hash_gram
 
     def pr_gram(self, r_gram_dict, string_input):
@@ -286,18 +306,18 @@ class NGram_Helpers:
         for i in string_input:
            if i in r_gram_dict:
               count = r_gram_dict.get(i)
-              print count
+              #print count
            else:
               count = 0.0 
            count_list.append(count)
         return count_list
 
-    def probability(self, count_3gram, count_2gram,count_1gram):
-        feq = [self.get_ratio(x, y, z) for x, y, z in zip(count_3gram, count_2gram, count_1gram)]
+    def probability(self, count_3gram, count_2gram,count_1gram, l1, l2, l3, l4):
+        feq = [self.get_ratio(x, y, z, l1, l2, l3, l4) for x, y, z in zip(count_3gram, count_2gram, count_1gram)]
         return reduce(operator.imul, feq)
 
     # smoothing so we don't end up with div by zero
-    def get_ratio(self, x, y, z):
+    def get_ratio(self, x, y, z, l1, l2, l3, l4):
         p_3gram = 0
         p_2gram = 0
         p_1gram = 0
@@ -306,11 +326,11 @@ class NGram_Helpers:
         if(z != 0):
             p_2gram = y/z
             p_1gram = z/self.total_words
-        else:
-            return 1.0/(2 * self.total_words)
-        return 0.8 * p_3gram + 0.15 * p_2gram + 0.05 * p_1gram
+        #else:
+            #return 1.0/(2 * self.total_words)
+        return (l1 * p_3gram) + (l2 * p_2gram) + (l3 * p_1gram) + (l4 * 1/(2 * self.total_words))
     
-    def inputs_utils(input_string, num):
+    def inputs_utils(self, input_string, num):
         input_list = self.build_tweet(input_string, num)
         input_list = self.build_ngrams(input_string, num)
         return input_list
@@ -324,53 +344,71 @@ class File_Utils:
         file_group = [f for f in os.listdir(tweet_path) if os.path.isfile(os.path.join(tweet_path, f))] 
         return file_group
      
-    def create_samples(self, file_group,root_dir="~/Tweets"):
+    def create_samples(self, file_group, root_dir="~/Tweets"):
         samples = [] 
         tweet_path = os.path.expanduser(root_dir)
         for tweet_file in file_group:
             samples.extend(open(os.path.join(tweet_path, tweet_file)))
-        for t in samples:
-            print t
+        #for t in samples:
+         #   print t
         return samples
         
-    def write_json(self, term_doc_matrix, file_name):
-        with open(file_name, 'w') as outfile:
-            json.dump(term_doc_matrix, outfile)
+    def write_json(self, term_doc_matrix, file_name, root_dir='~/forumPost'):
+        tweet_path = os.path.expanduser(root_dir)
+        with open(os.path.join(tweet_path, file_name), 'w') as outfile:
+            h = json.JSONEncoder().encode(term_doc_matrix)
+            json.dump(h, outfile, ensure_ascii=False)
+        
+    def read_json(self, file_name, root_dir="~/forumPost"):
+        tweet_path = os.path.expanduser(root_dir)
+        with open(os.path.join(tweet_path, file_name)) as f:
+            d = json.load(f)
+            d = json.JSONDecoder().decode(d)
+        return d
 
 ###############################################################################
-# up to 3grams must read output and output probability 
-# the dog P(w2 | w1) the dog laughs P(w3 |w2, w1)
-# P(w1|w-1, w0), * P(w2|w1, w0) symbols: stop and start anfor i ind replace -1 and end word etc with symbols
-# p(the dog laughs) /p(the dog)
 
 if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
     fi = File_Utils()
 
     samples = []
+    posts = []
     file_group = fi.crawl_directory()
-    samples = fi.create_samples(file_group)
+    samples += fi.create_samples(file_group)
     n = NGram_Helpers(samples)
-    fi.write_json(n.trigrams, "threeGram.txt")
-    fi.write_json(n.bigrams, "twoGram.txt")
-    fi.write_json(n.unigrams, "oneGram.txt")
-
-    line = raw_input('Enter a sentence:')
-    line_copy = line
-    input_three_list = n.inputs_utils(line_copy, 3)   
-    input_two_list = n.inputs_utils(line_copy, 2)
-    #for l in input_two_list:
-       #print l       
-    input_one_list = n.inputs_utils(line_copy, 1)
-    #for l in input_two_list:
-       #print l       
-    count_3_list = n.pr_gram(n.trigrams, input_three_list)
-    for k in count_3_list :
-       print k
-    count_2_list = n.pr_gram(n.bigrams, input_two_list)
+    #training data
+    trigrams = n.build_forum(samples, 3)
+    bigrams = n.build_forum(samples, 2)
+    unigrams = n.build_forum(samples, 1)
+    fi.write_json(trigrams, "threeGram.json")
+    fi.write_json(bigrams, "twoGram.json")
+    fi.write_json(unigrams, "oneGram.json")
+    #test data
+    forum_samples = fi.crawl_directory('~/forums')
+    posts += fi.create_samples(file_group)
+    input_three_list = n.build_forum(posts, 3)
+    input_two_list = n.build_forum(posts, 2)
+    input_one_list = n.build_forum(posts, 1)
+    fi.write_json(input_two_list, "forumTwoGram.json")
+    fi.write_json(input_three_list, "forumThreeGram.json")
+    fi.write_json(input_one_list, "forumOneGram.json")
+    #now test the test
+    out_path = '~/forumPost'
+    lineOneGram = fi.read_json("oneGram.json") 
+    lineTwoGram = fi.read_json("twoGram.json") 
+    lineThreeGram = fi.read_json("threeGram.json")  
+    inputTwoGram = fi.read_json("forumTwoGram.json")
+    inputOneGram = fi.read_json("forumOneGram.json")  
+    inputThreeGram = fi.read_json("forumThreeGram.json")  
+    count_3_list = n.pr_gram(lineThreeGram, inputThreeGram)
+    count_2_list = n.pr_gram(lineTwoGram, inputTwoGram)
     for f in count_2_list:
-       print f    
-    count_1_list = n.pr_gram(n.unigrams, input_one_list)
-    
-    pr = n.probability(count_3_list, count_2_list,count_1_list)
+      print f    
+    count_1_list = n.pr_gram(lineOneGram, inputOneGram)
+    L1 = 0.85
+    L2 = 0.1
+    L3 = 0.04
+    L4 = 0.01
+    pr = n.probability(count_3_list, count_2_list, count_1_list, L4, L3, L2, L1)
     print pr
