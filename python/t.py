@@ -399,8 +399,8 @@ if __name__ == '__main__':
     posts += fi.create_samples(file_group)
     ngram_base = n.build_tweet(posts, 3, 2)
     tri_gram = n.build_ngrams(ngram_base, 3)
-    duo_gram = n.build_ngrams(ngram_base[1:], 2)
-    uno_gram = n.build_ngrams(ngram_base[2:], 1)
+    duo_gram = n.build_ngrams(ngram_base, 2)
+    uno_gram = n.build_ngrams(ngram_base, 1)
     fi.write_json(tri_gram, "forumThreeGram.json")
     fi.write_json(duo_gram, "forumTwoGram.json")
     fi.write_json(uno_gram, "forumOneGram.json")
@@ -414,7 +414,8 @@ if __name__ == '__main__':
     inputThreeGram = fi.read_json("forumThreeGram.json") 
     length = len(lineThreeGram) 
     count_3_list = n.pr_gram(lineThreeGram, inputThreeGram)
-    print count_3_list
+    print inputThreeGram
+    print inputTwoGram[:len(inputThreeGram)]
     count_2_list = n.pr_gram(lineTwoGram, inputTwoGram[:len(inputThreeGram)])
     count_1_list = n.pr_gram(lineOneGram, inputOneGram[:len(inputThreeGram)])
     L1 = 0.85
