@@ -244,51 +244,62 @@ class NGram_Helpers:
     
     hash_dict = {}
     forum_dict = {}
+    forum_three_dict = {}
+    forum_two_dict = {}
+    forum_one_dict = {}
+    METHOD_NAME = { 'PARSE':0, 'TOKENIZE':1, 'SPLIT':2, 'SPLICE': 3 }
+        
         
     def __init__(self,samples):
         self.unigrams = self.loop(samples,1)
         self.bigrams = self.loop(samples,2)
         self.trigrams = self.loop(samples,3)
         self.total_words = sum(self.unigrams.values())
-        
+   
+    #refactor along with build_forum     
     def loop(self, samples, num):
         n_list = []
         n_dict = {}    
         for s in samples:
-            n_list = self.build_tweet(s, num)
+            n_list = self.build_tweet(s, num, 0)
             n_list = self.build_ngrams(n_list, num)
             self.hash_dict.update(self.count_gram(n_list, self.hash_dict))
             n_dict.update(self.count_gram(n_list, n_dict))
         return  n_dict
 
-    def build_tweet(self, s, num):
-        tokenized = []
+    def build_tweet(self, s, num, method_name):
+	tokenized = []
         for i in range(0, num - 1):
             tokenized += ["*"]
-        tokenized += tok.tokenize(s)
+        if method_name == self.METHOD_NAME.get('TOKENIZE'):
+            tokenized += tok.tokenize(s)
+        elif method_name == self.METHOD_NAME.get('PARSE'):
+            tokenized += s.split()
+        elif method_name == self.METHOD_NAME.get('SPLIT'):
+            for single_line in s:
+            	tokenized += single_line.split()
         tokenized += ["~STOP~"]  
         return tokenized
 
     def build_forum(self, samples, num):
-        n_dict = {}
-        for s in samples:
-            parsed = []
-            for i in range(0, num - 1):
-                parsed += ["*"]
-            parsed += s.split()
-            parsed += ["~STOP~"]
-            #print parsed
-            parsed = self.build_ngrams(parsed, num)
-            #print parsed
-            self.forum_dict.update(self.count_gram(parsed, self.forum_dict))
-            n_dict.update(self.count_gram(parsed, n_dict))
-            print n_dict
-        return n_dict
-        
+        self.clear_dicts()
+        parsed = []
+        parsed = self.build_tweet(samples, num, 2)
+        self.forum_three_dict.update(self.count_gram(self.build_ngrams(parsed, num), self.forum_three_dict))
+        self.forum_two_dict.update(self.count_gram(self.build_ngrams(parsed[1:], num-1), self.forum_two_dict))
+        self.forum_one_dict.update(self.count_gram(self.build_ngrams(parsed[2:], num-2), self.forum_one_dict))            
+    
+    def clear_dicts(self):
+        self.forum_three_dict.clear()
+        self.forum_two_dict.clear()
+        self.forum_one_dict.clear()     
         
     def build_ngrams(self, tokenized, num):
-        hash_list = [] 
+        hash_list = []   
+        print tokenized
+        print "tokenizedi"
         for i in range(len(tokenized)-(num-1)):
+            print tokenized[i]
     	    hash_gram = "_".join(tokenized[i:i+num])
             hash_list.append(hash_gram)
             #print hash_list.count(hash_gram)
@@ -306,7 +317,7 @@ class NGram_Helpers:
         for i in string_input:
            if i in r_gram_dict:
               count = r_gram_dict.get(i)
-              #print count
+              print count
            else:
               count = 0.0 
            count_list.append(count)
@@ -324,17 +335,9 @@ class NGram_Helpers:
         if(y != 0):
             p_3gram = x/y
         if(z != 0):
-            p_2gram = y/z
+            p_2gram = y/z       
             p_1gram = z/self.total_words
-        #else:
-            #return 1.0/(2 * self.total_words)
-        return (l1 * p_3gram) + (l2 * p_2gram) + (l3 * p_1gram) + (l4 * 1/(2 * self.total_words))
-    
-    def inputs_utils(self, input_string, num):
-        input_list = self.build_tweet(input_string, num)
-        input_list = self.build_ngrams(input_string, num)
-        return input_list
-        
+        return (l1 * p_3gram) + (l2 * p_2gram) + (l3 * p_1gram) + (l4 * 1/(2 * self.total_words))       
             
 class File_Utils:
     
@@ -359,7 +362,7 @@ class File_Utils:
             h = json.JSONEncoder().encode(term_doc_matrix)
             json.dump(h, outfile, ensure_ascii=False)
         
-    def read_json(self, file_name, root_dir="~/forumPost"):
+    def read_json(self, file_name, root_dir="~/forumPost"):        
         tweet_path = os.path.expanduser(root_dir)
         with open(os.path.join(tweet_path, file_name)) as f:
             d = json.load(f)
@@ -378,33 +381,33 @@ if __name__ == '__main__':
     samples += fi.create_samples(file_group)
     n = NGram_Helpers(samples)
     #training data
-    trigrams = n.build_forum(samples, 3)
-    bigrams = n.build_forum(samples, 2)
-    unigrams = n.build_forum(samples, 1)
-    fi.write_json(trigrams, "threeGram.json")
-    fi.write_json(bigrams, "twoGram.json")
-    fi.write_json(unigrams, "oneGram.json")
+    n.build_forum(samples, 3)
+    fi.write_json(n.forum_three_dict, "threeGram.json")
+    fi.write_json(n.forum_two_dict, "twoGram.json")
+    fi.write_json(n.forum_one_dict, "oneGram.json")
     #test data
     forum_samples = fi.crawl_directory('~/forums')
     posts += fi.create_samples(file_group)
-    input_three_list = n.build_forum(posts, 3)
-    input_two_list = n.build_forum(posts, 2)
-    input_one_list = n.build_forum(posts, 1)
-    fi.write_json(input_two_list, "forumTwoGram.json")
-    fi.write_json(input_three_list, "forumThreeGram.json")
-    fi.write_json(input_one_list, "forumOneGram.json")
+    ngram_base = n.build_tweet(posts, 3, 2)
+    tri_gram = n.build_ngrams(ngram_base, 3)
+    duo_gram = n.build_ngrams(ngram_base[:1], 2)
+    uno_gram = n.build_ngrams(ngram_base[:2], 1)
+    fi.write_json(tri_gram, "forumThreeGram.json")
+    fi.write_json(duo_gram, "forumTwoGram.json")
+    fi.write_json(uno_gram, "forumOneGram.json")
     #now test the test
     out_path = '~/forumPost'
+    lineThreeGram = fi.read_json("threeGram.json")
     lineOneGram = fi.read_json("oneGram.json") 
     lineTwoGram = fi.read_json("twoGram.json") 
-    lineThreeGram = fi.read_json("threeGram.json")  
     inputTwoGram = fi.read_json("forumTwoGram.json")
     inputOneGram = fi.read_json("forumOneGram.json")  
-    inputThreeGram = fi.read_json("forumThreeGram.json")  
+    inputThreeGram = fi.read_json("forumThreeGram.json") 
+    length = len(lineThreeGram) 
+    #pass list for compare, dict makes no sense at all.
     count_3_list = n.pr_gram(lineThreeGram, inputThreeGram)
-    count_2_list = n.pr_gram(lineTwoGram, inputTwoGram)
-    for f in count_2_list:
-      print f    
+    count_2_list = n.pr_gram(lineTwoGram[:length], inputTwoGram)
+
     count_1_list = n.pr_gram(lineOneGram, inputOneGram)
     L1 = 0.85
     L2 = 0.1
