@@ -247,7 +247,7 @@ class NGram_Helpers:
     forum_three_dict = {}
     forum_two_dict = {}
     forum_one_dict = {}
-    METHOD_NAME = { 'PARSE':0, 'TOKENIZE':1, 'SPLIT':2, 'SPLICE': 3 }
+    METHOD_NAME = { 'PARSE':0, 'TOKENIZE':1, 'SPLIT':2 }
         
         
     def __init__(self,samples):
@@ -312,18 +312,29 @@ class NGram_Helpers:
 
     def pr_gram(self, r_gram_dict, string_input):
         count_list = []
+        special_case = []
         for i in string_input:
-           if i in r_gram_dict:
-              count = r_gram_dict.get(i)
-              print count
+           if str(i).find("*") >= 0 and i in r_gram_dict:
+              special_case.append(r_gram_dict.get(i))
+           elif not str(i).find('*') >= 0 and i in r_gram_dict:
+              count_list.append(r_gram_dict.get(i))
            else:
-              count = 0.0 
-           count_list.append(count)
-        return count_list
+              count_list.append(0.0) 
+        return special_case, count_list
 
     def probability(self, count_3gram, count_2gram,count_1gram, l1, l2, l3, l4):
         feq = [self.get_ratio(x, y, z, l1, l2, l3, l4) for x, y, z in zip(count_3gram, count_2gram, count_1gram)]
         return reduce(operator.imul, feq)
+        
+    def start_probability(self, count_3gram, count_2gram, l1, l4):
+        feq = [self.get_start_ratio(x, y, l1, l4) for x, y in zip(count_3gram, count_2gram)]
+        return reduce(operator.imul, feq)
+        
+    def get_start_ratio(self, x, y, l1, l4):
+        p_3gram = 0        
+        if(y != 0):
+            p_3gram = x/y
+        return (l1 * p_3gram) + (l4 * 1/(2 * self.total_words))     
 
     # smoothing so we don't end up with div by zero
     def get_ratio(self, x, y, z, l1, l2, l3, l4):
@@ -388,8 +399,8 @@ if __name__ == '__main__':
     posts += fi.create_samples(file_group)
     ngram_base = n.build_tweet(posts, 3, 2)
     tri_gram = n.build_ngrams(ngram_base, 3)
-    duo_gram = n.build_ngrams(ngram_base[:1], 2)
-    uno_gram = n.build_ngrams(ngram_base[:2], 1)
+    duo_gram = n.build_ngrams(ngram_base[1:], 2)
+    uno_gram = n.build_ngrams(ngram_base[2:], 1)
     fi.write_json(tri_gram, "forumThreeGram.json")
     fi.write_json(duo_gram, "forumTwoGram.json")
     fi.write_json(uno_gram, "forumOneGram.json")
@@ -404,12 +415,16 @@ if __name__ == '__main__':
     length = len(lineThreeGram) 
     #pass list for compare, dict makes no sense at all.
     count_3_list = n.pr_gram(lineThreeGram, inputThreeGram)
-    count_2_list = n.pr_gram(lineTwoGram[:length], inputTwoGram)
-
-    count_1_list = n.pr_gram(lineOneGram, inputOneGram)
+    print count_3_list
+    count_2_list = n.pr_gram(lineTwoGram, inputTwoGram[:len(inputThreeGram)])
+    count_1_list = n.pr_gram(lineOneGram, inputOneGram[:len(inputThreeGram)])
     L1 = 0.85
     L2 = 0.1
     L3 = 0.04
     L4 = 0.01
-    pr = n.probability(count_3_list, count_2_list, count_1_list, L4, L3, L2, L1)
+    st_pr = n.start_probability(count_3_list[0], count_2_list[0], L1, L4)
+    pr = n.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4)
+    if st_pr != 0 and pr != 0:
+        pr = st_pr * pr
+        print st_pr
     print pr
