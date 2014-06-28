@@ -296,8 +296,6 @@ class NGram_Helpers:
         
     def build_ngrams(self, tokenized, num):
         hash_list = []   
-        print tokenized
-        print "tokenizedi"
         for i in range(len(tokenized)-(num-1)):
             print tokenized[i]
     	    hash_gram = "_".join(tokenized[i:i+num])
