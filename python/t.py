@@ -413,7 +413,6 @@ if __name__ == '__main__':
     inputOneGram = fi.read_json("forumOneGram.json")  
     inputThreeGram = fi.read_json("forumThreeGram.json") 
     length = len(lineThreeGram) 
-    #pass list for compare, dict makes no sense at all.
     count_3_list = n.pr_gram(lineThreeGram, inputThreeGram)
     print count_3_list
     count_2_list = n.pr_gram(lineTwoGram, inputTwoGram[:len(inputThreeGram)])
