@@ -247,7 +247,7 @@ class NGram_Helpers:
     forum_three_dict = {}
     forum_two_dict = {}
     forum_one_dict = {}
-    METHOD_NAME = { 'PARSE':0, 'TOKENIZE':1, 'SPLIT':2 }
+    METHOD_NAME = { 'PARSE':0, 'TOKENIZE':1, 'SPLIT':2, 'COUNT':3, 'HASH':4 }
         
         
     def __init__(self,samples):
@@ -281,13 +281,16 @@ class NGram_Helpers:
         tokenized += ["~STOP~"]  
         return tokenized
 
-    def build_forum(self, samples, num):
+    def build_forum(self, samples, num, method_name):
         self.clear_dicts()
         parsed = []
         parsed = self.build_tweet(samples, num, 2)
-        self.forum_three_dict.update(self.count_gram(self.build_ngrams(parsed, num), self.forum_three_dict))
-        self.forum_two_dict.update(self.count_gram(self.build_ngrams(parsed[1:], num-1), self.forum_two_dict))
-        self.forum_one_dict.update(self.count_gram(self.build_ngrams(parsed[2:], num-2), self.forum_one_dict))            
+        if method_name == self.METHOD_NAME.get('COUNT'):
+            return parsed
+        else:
+            self.forum_three_dict.update(self.count_gram(self.build_ngrams(parsed, num), self.forum_three_dict))
+            self.forum_two_dict.update(self.count_gram(self.build_ngrams(parsed, num-1), self.forum_two_dict))
+            self.forum_one_dict.update(self.count_gram(self.build_ngrams(parsed, num-2), self.forum_one_dict))            
     
     def clear_dicts(self):
         self.forum_three_dict.clear()
@@ -390,7 +393,7 @@ if __name__ == '__main__':
     samples += fi.create_samples(file_group)
     n = NGram_Helpers(samples)
     #training data
-    n.build_forum(samples, 3)
+    n.build_forum(samples, 3, 4)
     fi.write_json(n.forum_three_dict, "threeGram.json")
     fi.write_json(n.forum_two_dict, "twoGram.json")
     fi.write_json(n.forum_one_dict, "oneGram.json")
@@ -415,15 +418,23 @@ if __name__ == '__main__':
     length = len(lineThreeGram) 
     count_3_list = n.pr_gram(lineThreeGram, inputThreeGram)
     print inputThreeGram
+    print len(inputThreeGram)
     print inputTwoGram[:len(inputThreeGram)]
+    print len(inputTwoGram[:len(inputThreeGram)])
+    print inputOneGram[:len(inputThreeGram)] 
     count_2_list = n.pr_gram(lineTwoGram, inputTwoGram[:len(inputThreeGram)])
+    len(count_2_list)
     count_1_list = n.pr_gram(lineOneGram, inputOneGram[:len(inputThreeGram)])
     L1 = 0.85
     L2 = 0.1
     L3 = 0.04
     L4 = 0.01
     st_pr = n.start_probability(count_3_list[0], count_2_list[0], L1, L4)
+    print count_1_list[1]
+    print count_2_list[1]
+    print count_3_list[1]
     pr = n.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4)
+    print pr
     if st_pr != 0 and pr != 0:
         pr = st_pr * pr
         print st_pr
