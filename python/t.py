@@ -439,3 +439,12 @@ if __name__ == '__main__':
         pr = st_pr * pr
         print st_pr
     print pr
+    
+    #ask for user input
+    
+    #train with 90% of forum data test with 10% of forum data what is the average probability of a sentence
+   # output 50 probabilities and save to excel
+    
+    #test with tweets and find average
+     # output 50 probabilities and save to excel
+    
