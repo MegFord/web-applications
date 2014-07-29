@@ -485,6 +485,7 @@ if __name__ == '__main__':
     fi.write_json(n.unigrams, "oneGram.json")
     #end section to create training data
     """
+    #section to find prob of individual sentences from test data
     lineThreeGram = fi.read_json("threeGram.json")
     lineTwoGram = fi.read_json("twoGram.json")
     lineOneGram = fi.read_json("oneGram.json") 
@@ -512,6 +513,7 @@ if __name__ == '__main__':
             pr = st_pr * pr
         prob[f] = pr
     fi.write_prob(prob,"probability.csv")
+    #end test data section
    
     """
     fi.write_json(tri_gram, "forumThreeGram.json")
