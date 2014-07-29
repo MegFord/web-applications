@@ -406,28 +406,8 @@ class File_Utils:
             with open(os.path.join(tweet_path, tweet_file), 'w') as outfile:
                 outfile.write(t)
                 
-    def clean_posts(self, word):
-        word = re.sub(r'99 for 2 day shipping if you dont', "", word)
-        word = re.sub(r'Debbie Riddle, R-Tomball, the House sponsor of the measure', "", word)
-        word = re.sub(r'Prize will be shipped to the winner at no cost to the winner', "", word)
-        word = re.sub(r'Happy Birthday To You', "", word)
-        word = re.sub(r'For complete rules, please visitBellaOnline ALERT:  Raw URLs are not allowed in these forums for security reasons', "", word)
-        word = re.sub(r'FarjanaEnvironment at BellaOnline', "", word)
-        word = re.sub(r'Julie BaumlerComputer Careers EditorComputer Careers ForumJulie', "", word) 
-        word = re.sub(r'com', "", word)
-        word = re.sub(r'49 (free ship because I have Amazon Prime), but + 2', "", word)
-        word = re.sub(r'Stephanie WatsonWeight Loss EditorI agree with Lynn', "", word)
-        word = re.sub(r'ResultsNo HomeworkWeak Memory', "", word)
-        word = re.sub(r'comSince November of 2004', "", word)
-        word = re.sub(r'\*HINT\*BellaOnline ALERT:  Raw URLs are not allowed in these forums for security reasons', "", word)
-        word = re.sub(r'SueEarly Childhoodhttp://www', "", word)
-        word = re.sub(r'ElleiseClairvoyance Editor', "", word)
-        word = re.sub(r'\(adsbygoogle = window', "", word)
-        
+    def clean_posts(self, word):       
         word = re.sub(r'_________________________', "", word)
-        word = re.sub(r'Hope Fields\"Though I am one person,the voice which I use, to speak out against domestic violence, is the voice of many.\"', "", word)
-        word = re.sub(r'JanetJanetBoyer.com', "", word)
-        word = re.sub(r'Jeanette Stingley - Women\'s Lithttp://womenslit.bellaonline', "", word)
         return word
         
     def remove_punct(self, samples):
