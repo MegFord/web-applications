@@ -47,6 +47,7 @@ __email__ = "See the author's website"
 
 ######################################################################
 
+import argparse
 import collections
 from collections import defaultdict
 import csv
@@ -91,6 +92,7 @@ url_string =  r"""(?:[htp]+[s]?[:/]+[a-z0-9]+[\w\d\.a-z/\?\=\&%\-]*)"""
 apo_dash = r"""(?:[a-z][a-z'\-_]+[a-z])"""       
 elip_word = r"""(?:\.(?:\s*\.){1,})"""
 nums = r"""(?:[+\-]?\d+[,/.:-]\d+[+\-]?)""" 
+punct_string = r"""(?:["\*\\\(\)\]\[]?)"""
 # The components of the tokenizer:
 regex_strings = (
     # Phone numbers:
@@ -123,8 +125,8 @@ regex_strings = (
     hashtag_string
     ,
     # Last word in a sentence
-    sentence_end
-    ,
+    #sentence_end
+    #,
     #url
     url_string
     ,
@@ -137,8 +139,8 @@ regex_strings = (
     # Remaining word types:
     r"""
     (?:[\w_]+)                     
-    |
-    (?:\.(?:\s*\.){1,})            # Ellipsis dots. 
+    #|
+    #(?:\.(?:\s*\.){1,})            # Ellipsis dots. 
     #| 
     #(?:\S)                         # Everything else that isn't whitespace.
     """
@@ -153,17 +155,22 @@ word_re = re.compile(r"""(%s)""" % "|".join(regex_strings), re.VERBOSE | re.I | 
 emoticon_re = re.compile(regex_strings[1], re.VERBOSE | re.I | re.UNICODE)
 username_re = re.compile(regex_strings[3], re.VERBOSE | re.I | re.UNICODE)
 hashtag_re = re.compile(regex_strings[4], re.VERBOSE | re.I | re.UNICODE)
-sentence_end_re = re.compile(regex_strings[5], re.VERBOSE | re.I | re.UNICODE)
-url_re = re.compile(regex_strings[6], re.VERBOSE | re.I | re.UNICODE)
-punct_re = re.compile(regex_strings[7], re.VERBOSE | re.I | re.UNICODE)
-num_re = re.compile(regex_strings[9], re.VERBOSE | re.I | re.UNICODE)
+sentence_end_re = re.compile(sentence_end, re.VERBOSE | re.I | re.UNICODE)
+url_re = re.compile(regex_strings[5], re.VERBOSE | re.I | re.UNICODE)
+apo_dash_re = re.compile(regex_strings[6], re.VERBOSE | re.I | re.UNICODE)
+num_re = re.compile(regex_strings[6], re.VERBOSE | re.I | re.UNICODE)
 
 # These are for regularizing HTML entities to Unicode:
 html_entity_digit_re = re.compile(r"&#\d+;")
 html_entity_alpha_re = re.compile(r"&\w+;")
 amp = "&amp;"
 
+# This is for stripping cruft from words
+punct_string_re = re.compile(punct_string, re.VERBOSE | re.I | re.UNICODE)
+
 ######################################################################
+# These are Geolocation codes: ADD ABREV FOR STATES + LONG NAMES FOR STATES
+Geo = ['USA', 'Alabama', 'AL', 'Alaska', 'AK', 'Arizona', 'AZ', 'Arkansas', 'AR', 'California', 'CA', 'Colorado', 'CO', 'Connecticut', 'CT', 'Delaware', 'DE', 'Florida', 'FL', 'Georgia', 'GA', 'Hawaii', 'HI', 'Idaho', 'ID', 'Illinois', 'IL', 'Indiana', 'IN', 'Iowa', 'IA', 'Kansas', 'KS', 'Kentucky', 'KY', 'Louisiana', 'LA', 'Maine', 'ME', 'Maryland', 'MD', 'Massachusetts', 'MA', 'Michigan', 'MI', 'Minnesota', 'MN', 'Mississippi', 'MS', 'Missouri', 'MO', 'Montana', 'MT', 'Nebraska', 'NE', 'Nevada', 'NV', 'New Hampshire', 'NH', 'New Jersey', 'NJ', 'New Mexico', 'NM', 'New York', 'NY', 'North Carolina', 'NC', 'North Dakota', 'ND', 'Ohio', 'OH', 'Oklahoma', 'OK', 'Oregon', 'OR', 'Pennsylvania', 'PA', 'Rhode Island', 'RI', 'South Carolina', 'SC', 'South Dakota', 'SD', 'Tennessee', 'TN', 'Texas', 'TX', 'Utah', 'UT', 'Vermont', 'VT', 'Virginia', 'VA', 'Washington', 'WA', 'West Virginia', 'WV', 'Wisconsin', 'WI', 'Wyoming', 'WY', 'Chicago', 'DC', 'Los Angeles']
 
 class Tokenizer:
     def __init__(self, preserve_case=False):
@@ -184,9 +191,11 @@ class Tokenizer:
         s = self.__html2unicode(s)
         # Tokenize:
         words = word_re.findall(s)
+        print "SSSS"
         # Possible alter the case, but avoid changing emoticons like :D into :d:
         if not self.preserve_case:
           words = map(lambda x : self.replace_special(x), words)
+          print words
         return words
 
     def tokenize_random_tweet(self):
@@ -403,13 +412,70 @@ class File_Utils:
             samples.extend(open(os.path.join(tweet_path, tweet_file)))
             for s in samples:
                 t += self.clean_posts(s)
+                #print tweet_file
+                #print t
             with open(os.path.join(tweet_path, tweet_file), 'w') as outfile:
                 outfile.write(t)
                 
     def clean_posts(self, word):       
         word = re.sub(r'_________________________', "", word)
+        word = re.sub(r'99 for 2 day shipping if you dont', "", word)
+        word = re.sub(r'Debbie Riddle, R-Tomball, the House sponsor of the measure', "", word)
+        word = re.sub(r'Prize will be shipped to the winner at no cost to the winner', "", word)
+        word = re.sub(r'Happy Birthday To You', "", word)
+        word = re.sub(r'49 (free ship because I have Amazon Prime), but + 2', "", word)
+        word = re.sub(r'Stephanie WatsonWeight Loss EditorI agree with Lynn', "", word)
+        word = re.sub(r'ResultsNo HomeworkWeak Memory', "", word)
+        word = re.sub(r'\(adsbygoogle = window', "", word)
+        word = re.sub(r'Preview', "", word)
+        word = re.sub(r'&quot;', "", word)
+        word = re.sub(r'�', " ", word)
+        word = re.sub(r'•', " ", word)
+        word = re.sub(r'', " ", word)
+        word = re.sub(r'\(adsbygoogle = window.adsbygoogle \|\| \[\]\).push\(\{\}\);', "", word)
+        word = re.sub(r'Kimberly C. Cannon, Bulb Gardening EditorWele! Bulb Gardening website Bulb Gardening forum', "", word)
+        word = re.sub('http://www.wishafriend./acMyspace Graphics- Myspace Halloween Graphics', "", word)
+        word = re.sub('Myspace Comments- Myspace Layouts-Myspace Graphics', "", word)
+        word = re.sub(punct_string_re, "", word)
+        if word.startswith("."):
+            word = word[1:]
         return word
         
+    def parse_tsv_tweets(self, samples, root_dir="~/Tweets"):
+        tweet_path = os.path.expanduser(root_dir)
+        for tweet_file in samples:
+            samples = []
+            t = []
+            samples.extend(open(os.path.join(tweet_path, tweet_file)))
+            #print samples
+            for s in samples:
+                k = [self.split_tweets_tsv(s)]
+                if len(k) > 0:
+                    print k
+                    t += k
+            writer = csv.writer(open(os.path.join(tweet_path, tweet_file), 'w'))
+
+            writer.writerow([t])
+                
+    def split_tweets_tsv(self, tweet):
+        temp = []
+        ret = []
+        temp = re.split('\t', tweet)
+        if  len(temp) == 5:
+            geo_substrings = temp[3].split(', ')
+            for g in geo_substrings:
+                #print g
+                if g in Geo:
+                    ret += temp 
+                    break 
+        print len(ret)         
+        return ret
+        
+    def generalize_time(self, tweet_array):
+        #for i = 0, i < len(tweet_array), i++:
+            #tweet_array[i][1] = substring((0, 'T'), tweet_array[i][1])
+        return tweet_array
+                 
     def remove_punct(self, samples):
         temp = []
         for s in samples:
@@ -433,7 +499,7 @@ class File_Utils:
             d = json.JSONDecoder().decode(d)
         return d
         
-    def write_prob(self, sentence, file_name, root_dir='~/forumPost'):
+    def write_prob_csv(self, sentence, file_name, root_dir='~/forumPost'):
         write_path = os.path.expanduser(root_dir)
         writer = csv.writer(open(os.path.join(write_path, file_name), 'wb'))
         #sort ordered dict highest to lowest probability
@@ -457,78 +523,100 @@ if __name__ == '__main__':
     L3 = 0.04
     L4 = 0.01
     st_pr = 0.0
-    training_dir = "~/forums"
-    out_path = '~/forumPost'
-    test_path = '~/testData'
-    """
-    #clean data  
-    file_group = fi.crawl_directory("~/forum1")
-    fi.gather(file_group,"~/forum1")
-    file_group2 = fi.crawl_directory("~/forum2")
-    fi.gather(file_group2,"~/forum2")
-    forum_samples = fi.crawl_directory(test_path)
-    fi.gather(forum_samples, test_path)
-
-    #Section to create training data
-    training_dir = "~/forums"
-    file_group = fi.crawl_directory("~/forum1")
-    file_group2 = fi.crawl_directory("~/forum2")
+    training_dir1 = "~/tweeting_crime/test_data/ForumsPreparedData/forum1"
+    training_dir2 = "~/tweeting_crime/test_data/ForumsPreparedData/forum2"
+    out_path = '~/tweeting_crime/test_data/ForumsPreparedData/forumPost'
+    test_path = '~/tweeting_crime/test_data/ForumsPreparedData/testData'
+    run_test_path = '~/tweeting_crime/test_data/ForumsSimpleTestData'
+    run_test_out_path = '~/tweeting_crime/test_data/ForumsSimpleResultData'
+    parser = argparse.ArgumentParser(description="Train (tr) or test (te) models")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-c", "--clean", action="store_true")
+    group.add_argument("-tr", "--train", action="store_true")
+    group.add_argument("-te", "--test", action="store_true")
+    group.add_argument("-rt", "--run_test", action="store_true")
+    group.add_argument("-cli", "--cli", action="store_true")
+    args = parser.parse_args()
+    if args.clean: 
+        #clean data  
+        file_group = fi.crawl_directory(training_dir1)
+        fi.gather(file_group,training_dir1)
+        file_group2 = fi.crawl_directory(training_dir2)
+        fi.gather(file_group2,training_dir2)
+        forum_samples = fi.crawl_directory(test_path)
+        fi.gather(forum_samples, test_path)
+    elif args.train:
+        #Section to create training data
+        file_group = fi.crawl_directory(training_dir1)
+        file_group2 = fi.crawl_directory(training_dir2)
    
-    samples += fi.create_samples(file_group,"~/forum1")
-    samples += fi.create_samples(file_group2,"~/forum2") 
+        samples += fi.create_samples(file_group,training_dir1)
+        samples += fi.create_samples(file_group2,training_dir2) 
     
-    samples = fi.remove_punct(samples)
-    #print samples
-    n = NGram_Helpers(samples)
-    fi.write_json(n.trigrams, "threeGram.json")
-    fi.write_json(n.bigrams, "twoGram.json")
-    fi.write_json(n.unigrams, "oneGram.json")
-    #end section to create training data
-    """
-    #section to find prob of individual sentences from test data
-    lineThreeGram = fi.read_json("threeGram.json")
-    lineTwoGram = fi.read_json("twoGram.json")
-    lineOneGram = fi.read_json("oneGram.json") 
+        samples = fi.remove_punct(samples)
+        print samples
+        n = NGram_Helpers(samples)
+        fi.write_json(n.trigrams, "threeGram.json")
+        fi.write_json(n.bigrams, "twoGram.json")
+        fi.write_json(n.unigrams, "oneGram.json")
+        #end section to create training data
+    elif args.test:
+        #section to find prob of individual sentences from test data
+        lineThreeGram = fi.read_json("threeGram.json")
+        lineTwoGram = fi.read_json("twoGram.json")
+        lineOneGram = fi.read_json("oneGram.json") 
 
-    forum_samples = fi.crawl_directory(test_path)
-    posts += fi.create_samples(forum_samples, test_path)
-    #print posts
-    forum_samples = fi.remove_punct(posts)
-    n = NGram_Helpers(forum_samples)
-    for f in forum_samples:
-        ngram_base = n.build_tweet(f, 3, 1)
-        tri_gram = n.build_ngrams(ngram_base, 3)
-        duo_gram = n.build_ngrams(ngram_base, 2)
-        uno_gram = n.build_ngrams(ngram_base, 1)
-        length = sum(lineOneGram.values())
+        forum_samples = fi.crawl_directory(test_path)
+        posts += fi.create_samples(forum_samples, test_path)
+        #print posts
+        forum_samples = fi.remove_punct(posts)
+        n = NGram_Helpers(forum_samples)
+        for f in forum_samples:
+            ngram_base = n.build_tweet(f, 3, 1)
+            tri_gram = n.build_ngrams(ngram_base, 3)
+            duo_gram = n.build_ngrams(ngram_base, 2)
+            uno_gram = n.build_ngrams(ngram_base, 1)
+            length = sum(lineOneGram.values())
 
-        count_3_list = n.pr_gram(lineThreeGram, tri_gram)
-        count_2_list = n.pr_gram(lineTwoGram, duo_gram[:len(tri_gram)])
-        count_1_list = n.pr_gram(lineOneGram, uno_gram[:len(tri_gram)])
-        if len(count_3_list[0]) > 0:
-            st_pr = n.start_probability(count_3_list[0], count_2_list[0], L1, L4, length)
-        if len(count_3_list[1]) > 0:
-            pr = n.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4, length)
-        if st_pr != 0.0 and pr != 0.0:
-            pr = st_pr * pr
-        prob[f] = pr
-    fi.write_prob(prob,"probability.csv")
-    #end test data section
+            count_3_list = n.pr_gram(lineThreeGram, tri_gram)
+            count_2_list = n.pr_gram(lineTwoGram, duo_gram[:len(tri_gram)])
+            count_1_list = n.pr_gram(lineOneGram, uno_gram[:len(tri_gram)])
+            if len(count_3_list[0]) > 0:
+                st_pr = n.start_probability(count_3_list[0], count_2_list[0], L1, L4, length)
+            if len(count_3_list[1]) > 0:
+                pr = n.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4, length)
+            if st_pr != 0.0 and pr != 0.0:
+                pr = st_pr * pr
+            prob[f] = pr
+        fi.write_prob_csv(prob,"probability.csv")
+        #end test data section
+    elif args.run_test:
+        file_group = fi.crawl_directory(run_test_path)
+        fi.gather(file_group,run_test_path)
+        samples += fi.create_samples(file_group,run_test_path) 
+    
+        samples = fi.remove_punct(samples)
+        n = NGram_Helpers(samples)
+        fi.write_json(n.trigrams, "threeGram.json", run_test_out_path)
+        fi.write_json(n.bigrams, "twoGram.json", run_test_out_path)
+        fi.write_json(n.unigrams, "oneGram.json", run_test_out_path)
+        
+    
+    #parse and test tweets
    
     """
+    
+ 
     fi.write_json(tri_gram, "forumThreeGram.json")
     fi.write_json(duo_gram, "forumTwoGram.json")
     fi.write_json(uno_gram, "forumOneGram.json")
-    """
-    #now test the test
-    """
+
     lineThreeGram = fi.read_json("threeGram.json")
     lineOneGram = fi.read_json("oneGram.json") 
     lineTwoGram = fi.read_json("twoGram.json") 
     inputTwoGram = fi.read_json("forumTwoGram.json")
     inputOneGram = fi.read_json("forumOneGram.json")  
     inputThreeGram = fi.read_json("forumThreeGram.json") 
-    """
     
     #ask for user input
     
@@ -537,5 +625,13 @@ if __name__ == '__main__':
     
     #test with tweets and find average
     # output 50 probabilities and save to excel
+    """
+    
+    #tweet_files = fi.crawl_directory('~/TweetFile')
+    #fi.parse_tsv_tweets(tweet_files, '~/TweetFile')
+    # use words not on stopword list
+    # get rid of meaningless punct
+    #use words not in stopword list
+    #upload to github
 
     
