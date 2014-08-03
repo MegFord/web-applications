@@ -654,8 +654,8 @@ if __name__ == '__main__':
     elif args.run_test:
         #Section to run simple tests on sample data
         file_group = fi.crawl_directory(run_test_path)
-        fi.gather(file_group,run_test_path)
         Tokenizer.read_stopword_list()
+        fi.gather(file_group,run_test_path)
         samples += fi.create_samples(file_group,run_test_path) 
     
         samples = fi.remove_punct(samples)
