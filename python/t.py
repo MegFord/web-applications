@@ -364,9 +364,9 @@ class NGram_Helpers:
         count_list = []
         special_case = []
         for i in string_input:
-           if str(i).find("*") >= 0 and i in r_gram_dict:
+           if str(i.encode('utf-8')).find("*") >= 0 and i in r_gram_dict:
               special_case.append(r_gram_dict.get(i))
-           elif not str(i).find('*') >= 0 and i in r_gram_dict:
+           elif not str(i.encode('utf-8')).find('*') >= 0 and i in r_gram_dict:
               count_list.append(r_gram_dict.get(i))
            else:
               count_list.append(0.0) 
