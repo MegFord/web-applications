@@ -586,6 +586,8 @@ if __name__ == '__main__':
         fi.gather(file_group2,training_dir2)
         forum_samples = fi.crawl_directory(test_path)
         fi.gather(forum_samples, test_path)
+        #end section to clean data
+        
     elif args.train:
         #Section to create training data
         file_group = fi.crawl_directory(training_dir1)
@@ -601,6 +603,7 @@ if __name__ == '__main__':
         fi.write_json(n.bigrams, "twoGram.json")
         fi.write_json(n.unigrams, "oneGram.json")
         #end section to create training data
+        
     elif args.test:
         #Section to find prob of individual sentences from test data
         lineThreeGram = fi.read_json("threeGram.json")
@@ -631,6 +634,7 @@ if __name__ == '__main__':
             prob[f] = pr
         fi.write_prob_csv(prob,"probability.csv")
         #end test data section
+        
     elif args.tweet_clean:
         # Section to separate tweets by Geolocation and return only US tweets
         lineThreeGram = fi.read_json("threeGram.json")
@@ -639,6 +643,7 @@ if __name__ == '__main__':
         file_group = fi.crawl_directory(orig_tweet_path)
         fi.parse_tsv_tweets(file_group, out_path=geo_tweet_path)
         #end section to return US tweets
+        
     elif args.run_test:
         #Section to run simple tests on sample data
         file_group = fi.crawl_directory(run_test_path)
@@ -659,18 +664,9 @@ if __name__ == '__main__':
     
     #ask for user input
     
-    #train with 90% of forum data test with 10% of forum data what is the average probability of a sentence
-    # output 50 probabilities and save to excel
-    
     #test with tweets and find average
-    # output 50 probabilities and save to excel
-    """
-    
-    #tweet_files = fi.crawl_directory('~/TweetFile')
-    #fi.parse_tsv_tweets(tweet_files, '~/TweetFile')
+
     # use words not on stopword list
-    # get rid of meaningless punct
-    #use words not in stopword list
-    #upload to github
+
 
     
