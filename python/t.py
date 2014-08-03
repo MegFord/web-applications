@@ -169,7 +169,7 @@ amp = "&amp;"
 punct_string_re = re.compile(punct_string, re.VERBOSE | re.I | re.UNICODE)
 
 ######################################################################
-# These are Geolocation codes: ADD ABREV FOR STATES + LONG NAMES FOR STATES
+# These are Geolocation codes
 Geo = ['USA', 'Alabama', 'AL', 'Alaska', 'AK', 'Arizona', 'AZ', 'Arkansas', 'AR', 
     'California', 'CA', 'Colorado', 'CO', 'Connecticut', 'CT', 'Delaware', 'DE', 
     'Florida', 'FL', 'Georgia', 'GA', 'Hawaii', 'HI', 'Idaho', 'ID', 'Illinois', 'IL', 
