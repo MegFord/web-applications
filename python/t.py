@@ -182,6 +182,8 @@ Geo = ['USA', 'Alabama', 'AL', 'Alaska', 'AK', 'Arizona', 'AZ', 'Arkansas', 'AR'
     'Tennessee', 'TN', 'Texas', 'TX', 'Utah', 'UT', 'Vermont', 'VT', 'Virginia', 'VA', 'Washington', 'WA', 
     'West Virginia', 'WV', 'Wisconsin', 'WI', 'Wyoming', 'WY', 'Chicago', 'DC', 'Los Angeles']
 
+Stop_List = []
+
 class Tokenizer:
     def __init__(self, preserve_case=False):
         self.preserve_case = preserve_case
@@ -205,7 +207,7 @@ class Tokenizer:
         # Possible alter the case, but avoid changing emoticons like :D into :d:
         if not self.preserve_case:
           words = map(lambda x : self.replace_special(x), words)
-          #print words
+        words = filter((lambda x : x not in Stop_List), words)
         return words
 
     def tokenize_random_tweet(self):
@@ -266,6 +268,12 @@ class Tokenizer:
             
         word = re.sub(",", " ", word)
         return word.lower()
+        
+    @classmethod        
+    def read_stopword_list(self, file_name='en.txt', root_dir='~/tweeting_crime/test_data/StopwordsList'):     
+        with open(os.path.join(os.path.expanduser(root_dir), file_name)) as f:
+            global Stop_List 
+            Stop_List = [line.rstrip() for line in f]
 
 
 class NGram_Helpers:   
