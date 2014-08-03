@@ -572,7 +572,7 @@ if __name__ == '__main__':
     test_path = '~/tweeting_crime/test_data/ForumsPreparedData/testData'
     training_dir1 = '~/tweeting_crime/test_data/ForumsPreparedData/forum1'
     training_dir2 = '~/tweeting_crime/test_data/ForumsPreparedData/forum2'
-    stopword_dir = '~/tweeting_crime/test_data/StopwordsList/stopwords.csv'      
+    stopword_dir = '~/tweeting_crime/test_data/StopwordsList/en.txt'        
     
     parser = argparse.ArgumentParser(description=
         "Train (tr), test (te), clean (c) models. Clean Twitter short texts(tc).Run tests (rt)")
@@ -655,6 +655,7 @@ if __name__ == '__main__':
         #Section to run simple tests on sample data
         file_group = fi.crawl_directory(run_test_path)
         fi.gather(file_group,run_test_path)
+        Tokenizer.read_stopword_list()
         samples += fi.create_samples(file_group,run_test_path) 
     
         samples = fi.remove_punct(samples)
