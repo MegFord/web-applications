@@ -203,7 +203,6 @@ class Tokenizer:
         s = self.__html2unicode(s)
         # Tokenize:
         words = word_re.findall(s)
-        #print "SSSS"
         # Possible alter the case, but avoid changing emoticons like :D into :d:
         if not self.preserve_case:
           words = map(lambda x : self.replace_special(x), words)
