@@ -547,8 +547,8 @@ if __name__ == '__main__':
     tok = Tokenizer(preserve_case=False)
     fi = File_Utils()
 
-    samples = []
     posts = []
+    samples = []
     temp = []
     prob = collections.OrderedDict()
     L1 = 0.85
@@ -556,23 +556,28 @@ if __name__ == '__main__':
     L3 = 0.04
     L4 = 0.01
     st_pr = 0.0
-    training_dir1 = "~/tweeting_crime/test_data/ForumsPreparedData/forum1"
-    training_dir2 = "~/tweeting_crime/test_data/ForumsPreparedData/forum2"
-    out_path = '~/tweeting_crime/test_data/ForumsPreparedData/forumPost'
-    test_path = '~/tweeting_crime/test_data/ForumsPreparedData/testData'
-    run_test_path = '~/tweeting_crime/test_data/ForumsSimpleTestData'
-    run_test_out_path = '~/tweeting_crime/test_data/ForumsSimpleResultData'
-    orig_tweet_path = '~/Tweets'
+    
     geo_tweet_path = '~/GeoTweets'
-    parser = argparse.ArgumentParser(description="Train (tr), test (te), clean (c) models. Run tests (rt)")
+    orig_tweet_path = '~/Tweets'
+    out_path = '~/tweeting_crime/test_data/ForumsPreparedData/forumPost'
+    run_test_out_path = '~/tweeting_crime/test_data/ForumsSimpleResultData'
+    run_test_path = '~/tweeting_crime/test_data/ForumsSimpleTestData'
+    test_path = '~/tweeting_crime/test_data/ForumsPreparedData/testData'
+    training_dir1 = '~/tweeting_crime/test_data/ForumsPreparedData/forum1'
+    training_dir2 = '~/tweeting_crime/test_data/ForumsPreparedData/forum2'
+    stopword_dir = '~/tweeting_crime/test_data/StopwordsList/stopwords.csv'      
+    
+    parser = argparse.ArgumentParser(description=
+        "Train (tr), test (te), clean (c) models. Clean Twitter short texts(tc).Run tests (rt)")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-c", "--clean", action="store_true")
-    group.add_argument("-tr", "--train", action="store_true")
-    group.add_argument("-te", "--test", action="store_true")
-    group.add_argument("-rt", "--run_test", action="store_true")
     group.add_argument("-cli", "--cli", action="store_true")
+    group.add_argument("-tr", "--train", action="store_true")
     group.add_argument("-tc", "--tweet_clean", action="store_true")
+    group.add_argument("-te", "--test", action="store_true")
+    group.add_argument("-rt", "--run_test", action="store_true")   
     args = parser.parse_args()
+    
     if args.clean: 
         #Section to clean data  
         file_group = fi.crawl_directory(training_dir1)
