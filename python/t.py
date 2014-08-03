@@ -92,7 +92,7 @@ url_string =  r"""(?:[htp]+[s]?[:/]+[a-z0-9]+[\w\d\.a-z/\?\=\&%\-]*)"""
 apo_dash = r"""(?:[a-z][a-z'\-_]+[a-z])"""       
 elip_word = r"""(?:\.(?:\s*\.){1,})"""
 nums = r"""(?:[+\-]?\d+[,/.:-]\d+[+\-]?)""" 
-punct_string = r"""(?:["\*\\\(\)\]\[]?)"""
+punct_string = r"""(?:["\*\\\(\)\]\[~]?)"""
 # The components of the tokenizer:
 regex_strings = (
     # Phone numbers:
@@ -191,11 +191,11 @@ class Tokenizer:
         s = self.__html2unicode(s)
         # Tokenize:
         words = word_re.findall(s)
-        print "SSSS"
+        #print "SSSS"
         # Possible alter the case, but avoid changing emoticons like :D into :d:
         if not self.preserve_case:
           words = map(lambda x : self.replace_special(x), words)
-          print words
+          #print words
         return words
 
     def tokenize_random_tweet(self):
@@ -265,6 +265,7 @@ class NGram_Helpers:
     forum_three_dict = {}
     forum_two_dict = {}
     forum_one_dict = {}
+
     METHOD_NAME = { 'PARSE':0, 'TOKENIZE':1, 'SPLIT':2, 'COUNT':3, 'HASH':4, 'REPLACE':5 }
         
         
@@ -309,6 +310,7 @@ class NGram_Helpers:
         for s in samples:
             parsed_sentence += self.build_tweet(samples, num, 4)
             
+    @classmethod        
     def build_tweet(self, s, num, method_name):
         tokenized = []
         for i in range(0, num - 1):
@@ -327,7 +329,8 @@ class NGram_Helpers:
         self.forum_three_dict.clear()
         self.forum_two_dict.clear()
         self.forum_one_dict.clear()     
-        
+    
+    @classmethod    
     def build_ngrams(self, tokenized, num):
         hash_list = []   
         for i in range(len(tokenized)-(num-1)):
@@ -335,7 +338,8 @@ class NGram_Helpers:
             hash_list.append(hash_gram)
             #print hash_list.count(hash_gram)
         return hash_list
-        
+    
+    @classmethod    
     def count_gram(self, ngram_list, hash_gram):
         for gram in ngram_list:
             #print gram
@@ -344,7 +348,8 @@ class NGram_Helpers:
             hash_gram[gram] = hash_gram.get(gram, 0) + 1
             #print hash_gram.get(gram)
         return hash_gram
-
+        
+    @classmethod
     def pr_gram(self, r_gram_dict, string_input):
         count_list = []
         special_case = []
@@ -356,21 +361,24 @@ class NGram_Helpers:
            else:
               count_list.append(0.0) 
         return special_case, count_list
-
+    
+    @classmethod
     def probability(self, count_3gram, count_2gram,count_1gram, l1, l2, l3, l4, total_words):
         feq = [self.get_ratio(x, y, z, l1, l2, l3, l4, total_words) for x, y, z in zip(count_3gram, count_2gram, count_1gram)]
         if len(feq) > 0:
             return reduce(operator.imul, feq)
         else:
             return l4 * 1/(2 * total_words)
-        
+            
+    @classmethod    
     def start_probability(self, count_3gram, count_2gram, l1, l4, total_words):
         feq = [self.get_start_ratio(x, y, l1, l4, total_words) for x, y in zip(count_3gram[:len(count_2gram)], count_2gram)]
         if len(feq) > 0:
             return reduce(operator.imul, feq)
         else:
             return l4 * 1/(2 * total_words)
-        
+            
+    @classmethod    
     def get_start_ratio(self, x, y, l1, l4, total_words):
         p_3gram = 0        
         if(y != 0):
@@ -378,6 +386,7 @@ class NGram_Helpers:
         return (l1 * p_3gram) + (l4 * 1/(2 * total_words))     
 
     # smoothing so we don't end up with div by zero
+    @classmethod
     def get_ratio(self, x, y, z, l1, l2, l3, l4, total_words):
         p_3gram = 0
         p_2gram = 0
@@ -390,6 +399,7 @@ class NGram_Helpers:
         return (l1 * p_3gram) + (l2 * p_2gram) + (l3 * p_1gram) + (l4 * 1/(2 * total_words))       
             
 class File_Utils:
+    dup_check_dict = {}
     
     def crawl_directory(self, root_dir="~/Tweets"):
         file_group = []
@@ -411,23 +421,20 @@ class File_Utils:
             t = ""
             samples.extend(open(os.path.join(tweet_path, tweet_file)))
             for s in samples:
-                t += self.clean_posts(s)
-                #print tweet_file
-                #print t
+                self.dup_check_dict[s] = self.dup_check_dict.get(s, 0) + 1
+                if self.dup_check_dict.get(s) == 1:
+                    t += self.clean_posts(s).lower()
             with open(os.path.join(tweet_path, tweet_file), 'w') as outfile:
                 outfile.write(t)
                 
     def clean_posts(self, word):       
         word = re.sub(r'_________________________', "", word)
         word = re.sub(r'99 for 2 day shipping if you dont', "", word)
-        word = re.sub(r'Debbie Riddle, R-Tomball, the House sponsor of the measure', "", word)
-        word = re.sub(r'Prize will be shipped to the winner at no cost to the winner', "", word)
         word = re.sub(r'Happy Birthday To You', "", word)
+        word = re.sub(r'Julie BaumlerComputer Careers EditorComputer Careers ForumJulie', "", word)
         word = re.sub(r'49 (free ship because I have Amazon Prime), but + 2', "", word)
-        word = re.sub(r'Stephanie WatsonWeight Loss EditorI agree with Lynn', "", word)
-        word = re.sub(r'ResultsNo HomeworkWeak Memory', "", word)
         word = re.sub(r'\(adsbygoogle = window', "", word)
-        word = re.sub(r'Preview', "", word)
+        word = re.sub(r'Myspace GraphicsQuizzesGlitter Graphics', "", word)
         word = re.sub(r'&quot;', "", word)
         word = re.sub(r'�', " ", word)
         word = re.sub(r'•', " ", word)
@@ -441,40 +448,55 @@ class File_Utils:
             word = word[1:]
         return word
         
-    def parse_tsv_tweets(self, samples, root_dir="~/Tweets"):
-        tweet_path = os.path.expanduser(root_dir)
-        for tweet_file in samples:
-            samples = []
-            t = []
-            samples.extend(open(os.path.join(tweet_path, tweet_file)))
-            #print samples
-            for s in samples:
-                k = [self.split_tweets_tsv(s)]
-                if len(k) > 0:
-                    print k
-                    t += k
-            writer = csv.writer(open(os.path.join(tweet_path, tweet_file), 'w'))
-
-            writer.writerow([t])
+    def parse_tsv_tweets(self, file_array, root_dir="~/Tweets", out_path='~/GeoTweets'):
+        for file_name in file_array:
+            tweet_path = os.path.expanduser(root_dir)
+            out_path = os.path.expanduser(out_path)
+            with open(os.path.join(tweet_path, file_name),'rb') as tsvin, open(os.path.join(out_path, file_name), 'wb') as csvout:
+                tsvin = csv.reader((line.replace('\0','') for line in tsvin), delimiter='\t')
+                csvout = csv.writer(csvout, delimiter='\t')
+                
+                for row in tsvin:
+                    k = self.split_tweets_tsv(row)
+                    print len(k)
+                    if len(k)== 5:
+                        k.append(self.tweet_pr(k[4]))
+                        print k[5]
+                        print k[2]
+                        csvout.writerows([k])
                 
     def split_tweets_tsv(self, tweet):
         temp = []
         ret = []
-        temp = re.split('\t', tweet)
-        if  len(temp) == 5:
-            geo_substrings = temp[3].split(', ')
+        if  len(tweet) == 5:
+            geo_substrings = tweet[3].split(', ')
             for g in geo_substrings:
-                #print g
                 if g in Geo:
-                    ret += temp 
+                    ret = tweet 
                     break 
-        print len(ret)         
+                else:
+                    ret = ["null"]       
         return ret
         
-    def generalize_time(self, tweet_array):
-        #for i = 0, i < len(tweet_array), i++:
-            #tweet_array[i][1] = substring((0, 'T'), tweet_array[i][1])
-        return tweet_array
+    def tweet_pr(self, tweet):
+        pr = 0
+        st_pr = 0
+        ngram_base = NGram_Helpers.build_tweet(tweet, 3, 1)
+        tri_gram = NGram_Helpers.build_ngrams(ngram_base, 3)
+        duo_gram = NGram_Helpers.build_ngrams(ngram_base, 2)
+        uno_gram = NGram_Helpers.build_ngrams(ngram_base, 1)
+        length = sum(lineOneGram.values())
+
+        count_3_list = NGram_Helpers.pr_gram(lineThreeGram, tri_gram)
+        count_2_list = NGram_Helpers.pr_gram(lineTwoGram, duo_gram[:len(tri_gram)])
+        count_1_list = NGram_Helpers.pr_gram(lineOneGram, uno_gram[:len(tri_gram)])
+        if len(count_3_list[0]) > 0:
+            st_pr = NGram_Helpers.start_probability(count_3_list[0], count_2_list[0], L1, L4, length)
+        if len(count_3_list[1]) > 0:
+            pr = NGram_Helpers.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4, length)
+        if st_pr != 0.0 and pr != 0.0:
+            pr = st_pr * pr
+        return pr
                  
     def remove_punct(self, samples):
         temp = []
@@ -529,13 +551,16 @@ if __name__ == '__main__':
     test_path = '~/tweeting_crime/test_data/ForumsPreparedData/testData'
     run_test_path = '~/tweeting_crime/test_data/ForumsSimpleTestData'
     run_test_out_path = '~/tweeting_crime/test_data/ForumsSimpleResultData'
-    parser = argparse.ArgumentParser(description="Train (tr) or test (te) models")
+    orig_tweet_path = '~/Tweets'
+    geo_tweet_path = '~/GeoTweets'
+    parser = argparse.ArgumentParser(description="Train (tr), test (te), clean (c) models. Run tests (rt)")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-c", "--clean", action="store_true")
     group.add_argument("-tr", "--train", action="store_true")
     group.add_argument("-te", "--test", action="store_true")
     group.add_argument("-rt", "--run_test", action="store_true")
     group.add_argument("-cli", "--cli", action="store_true")
+    group.add_argument("-tc", "--tweet_clean", action="store_true")
     args = parser.parse_args()
     if args.clean: 
         #clean data  
@@ -590,6 +615,14 @@ if __name__ == '__main__':
             prob[f] = pr
         fi.write_prob_csv(prob,"probability.csv")
         #end test data section
+    # Section to separate tweets by Geolocation and return only US tweets
+    elif args.tweet_clean:
+        lineThreeGram = fi.read_json("threeGram.json")
+        lineTwoGram = fi.read_json("twoGram.json")
+        lineOneGram = fi.read_json("oneGram.json") 
+        file_group = fi.crawl_directory(orig_tweet_path)
+        fi.parse_tsv_tweets(file_group, out_path=geo_tweet_path)
+    #end section to return US tweets
     elif args.run_test:
         file_group = fi.crawl_directory(run_test_path)
         fi.gather(file_group,run_test_path)
