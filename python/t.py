@@ -574,7 +574,7 @@ if __name__ == '__main__':
     group.add_argument("-tc", "--tweet_clean", action="store_true")
     args = parser.parse_args()
     if args.clean: 
-        #clean data  
+        #Section to clean data  
         file_group = fi.crawl_directory(training_dir1)
         fi.gather(file_group,training_dir1)
         file_group2 = fi.crawl_directory(training_dir2)
@@ -597,7 +597,7 @@ if __name__ == '__main__':
         fi.write_json(n.unigrams, "oneGram.json")
         #end section to create training data
     elif args.test:
-        #section to find prob of individual sentences from test data
+        #Section to find prob of individual sentences from test data
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
@@ -626,15 +626,16 @@ if __name__ == '__main__':
             prob[f] = pr
         fi.write_prob_csv(prob,"probability.csv")
         #end test data section
-    # Section to separate tweets by Geolocation and return only US tweets
     elif args.tweet_clean:
+        # Section to separate tweets by Geolocation and return only US tweets
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
         file_group = fi.crawl_directory(orig_tweet_path)
         fi.parse_tsv_tweets(file_group, out_path=geo_tweet_path)
-    #end section to return US tweets
+        #end section to return US tweets
     elif args.run_test:
+        #Section to run simple tests on sample data
         file_group = fi.crawl_directory(run_test_path)
         fi.gather(file_group,run_test_path)
         samples += fi.create_samples(file_group,run_test_path) 
@@ -644,23 +645,12 @@ if __name__ == '__main__':
         fi.write_json(n.trigrams, "threeGram.json", run_test_out_path)
         fi.write_json(n.bigrams, "twoGram.json", run_test_out_path)
         fi.write_json(n.unigrams, "oneGram.json", run_test_out_path)
+        #end section to run simple tests on sample data
         
     
-    #parse and test tweets
+    
    
     """
-    
- 
-    fi.write_json(tri_gram, "forumThreeGram.json")
-    fi.write_json(duo_gram, "forumTwoGram.json")
-    fi.write_json(uno_gram, "forumOneGram.json")
-
-    lineThreeGram = fi.read_json("threeGram.json")
-    lineOneGram = fi.read_json("oneGram.json") 
-    lineTwoGram = fi.read_json("twoGram.json") 
-    inputTwoGram = fi.read_json("forumTwoGram.json")
-    inputOneGram = fi.read_json("forumOneGram.json")  
-    inputThreeGram = fi.read_json("forumThreeGram.json") 
     
     #ask for user input
     
