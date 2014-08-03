@@ -489,7 +489,7 @@ class File_Utils:
         return ret
         
     def tweet_pr(self, tweet):
-        tweet = tweet.decode("utf-8")
+        tweet = tweet.encode("utf-8")
         pr = 0
         st_pr = 0
         ngram_base = NGram_Helpers.build_tweet(tweet, 3, 1)
