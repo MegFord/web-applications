@@ -671,22 +671,21 @@ if __name__ == '__main__':
         #end section to return US tweets
         
     elif args.tweet_recalculate:
-        #Section to recalculate probabilities for tweets based on new trainign data
+        #Section to recalculate probabilities for tweets based on new training data
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
         Tokenizer.read_stopword_list()
         file_group = fi.crawl_directory(geo_tweet_path)
         fi.parse_tsv_tweets(file_group, root_dir=geo_tweet_path, out_path=geo_tweet_path,method_name=5)
-        #end section to recalculate probabilities for tweets based on new trainign data
+        #end section to recalculate probabilities for tweets based on new training data
         
     elif args.run_test:
         #Section to test functionality with toy data set
         file_group = fi.crawl_directory(run_test_path)
         Tokenizer.read_stopword_list()
         fi.gather(file_group,run_test_path)
-        samples += fi.create_samples(file_group,run_test_path) 
-    
+        samples += fi.create_samples(file_group,run_test_path)    
         samples = fi.remove_punct(samples)
         n = NGram_Helpers(samples)
         fi.write_json(n.trigrams, "threeGram.json", run_test_out_path)
