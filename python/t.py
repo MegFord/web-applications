@@ -547,7 +547,6 @@ class Live_Tweet:
         stream.filter(locations=[-125.3,25.1,-66.9,48.6])
  
 class Live_Client(StreamListener):
-    @classmethod
     def on_data(self, data):
         #print data
         jsonized_tweet = json.loads(data)
@@ -560,7 +559,6 @@ class Live_Client(StreamListener):
         print File_Utils.tweet_pr(decoded_tweet['text'])
         return True
 
-    @classmethod
     def on_error(self, status):
         print status
            
