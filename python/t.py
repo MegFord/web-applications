@@ -48,9 +48,11 @@ __email__ = "See the author's website"
 ######################################################################
 
 import argparse
+import codecs
 import collections
 from collections import defaultdict
 import csv
+import getopt
 import htmlentitydefs
 import json
 import operator
@@ -58,6 +60,11 @@ import os
 from os import listdir
 from os.path import isfile, join
 import re
+import sys
+import time
+from tweepy.streaming import StreamListener
+from tweepy import OAuthHandler
+from tweepy import Stream
 
 ######################################################################
 # The following strings are components in the regular expression
@@ -170,19 +177,11 @@ punct_string_re = re.compile(punct_string, re.VERBOSE | re.I | re.UNICODE)
 
 ######################################################################
 # These are Geolocation codes
-Geo = ['USA', 'Alabama', 'AL', 'Alaska', 'AK', 'Arizona', 'AZ', 'Arkansas', 'AR', 
-    'California', 'CA', 'Colorado', 'CO', 'Connecticut', 'CT', 'Delaware', 'DE', 
-    'Florida', 'FL', 'Georgia', 'GA', 'Hawaii', 'HI', 'Idaho', 'ID', 'Illinois', 'IL', 
-    'Indiana', 'IN', 'Iowa', 'IA', 'Kansas', 'KS', 'Kentucky', 'KY', 'Louisiana', 'LA', 
-    'Maine', 'ME', 'Maryland', 'MD', 'Massachusetts', 'MA', 'Michigan', 'MI', 
-    'Minnesota', 'MN', 'Mississippi', 'MS', 'Missouri', 'MO', 'Montana', 'MT', 'Nebraska', 'NE', 
-    'Nevada', 'NV', 'New Hampshire', 'NH', 'New Jersey', 'NJ', 'New Mexico', 'NM', 'New York', 'NY', 
-    'North Carolina', 'NC', 'North Dakota', 'ND', 'Ohio', 'OH', 'Oklahoma', 'OK', 'Oregon', 'OR', 
-    'Pennsylvania', 'PA', 'Rhode Island', 'RI', 'South Carolina', 'SC', 'South Dakota', 'SD', 
-    'Tennessee', 'TN', 'Texas', 'TX', 'Utah', 'UT', 'Vermont', 'VT', 'Virginia', 'VA', 'Washington', 'WA', 
-    'West Virginia', 'WV', 'Wisconsin', 'WI', 'Wyoming', 'WY', 'Chicago', 'DC', 'Los Angeles']
+Geo = ['USA', 'Alabama', 'AL', 'Alaska', 'AK', 'Arizona', 'AZ', 'Arkansas', 'AR', 'California', 'CA', 'Colorado', 'CO', 'Connecticut', 'CT', 'Delaware', 'DE', 'Florida', 'FL', 'Georgia', 'GA', 'Hawaii', 'HI', 'Idaho', 'ID', 'Illinois', 'IL', 'Indiana', 'IN', 'Iowa', 'IA', 'Kansas', 'KS', 'Kentucky', 'KY', 'Louisiana', 'LA', 'Maine', 'ME', 'Maryland', 'MD', 'Massachusetts', 'MA', 'Michigan', 'MI', 'Minnesota', 'MN', 'Mississippi', 'MS', 'Missouri', 'MO', 'Montana', 'MT', 'Nebraska', 'NE', 'Nevada', 'NV', 'New Hampshire', 'NH', 'New Jersey', 'NJ', 'New Mexico', 'NM', 'New York', 'NY', 'North Carolina', 'NC', 'North Dakota', 'ND', 'Ohio', 'OH', 'Oklahoma', 'OK', 'Oregon', 'OR', 'Pennsylvania', 'PA', 'Rhode Island', 'RI', 'South Carolina', 'SC', 'South Dakota', 'SD', 'Tennessee', 'TN', 'Texas', 'TX', 'Utah', 'UT', 'Vermont', 'VT', 'Virginia', 'VA', 'Washington', 'WA', 'West Virginia', 'WV', 'Wisconsin', 'WI', 'Wyoming', 'WY', 'Chicago', 'DC', 'Los Angeles']
 
 Stop_List = []
+
+METHOD_NAME = { 'PARSE':0, 'TOKENIZE':1, 'SPLIT':2, 'COUNT':3, 'HASH':4, 'REPLACE':5 }
 
 class Tokenizer:
     def __init__(self, preserve_case=False):
@@ -203,34 +202,17 @@ class Tokenizer:
         s = self.__html2unicode(s)
         # Tokenize:
         words = word_re.findall(s)
+        #print "SSSS"
         # Possible alter the case, but avoid changing emoticons like :D into :d:
         if not self.preserve_case:
           words = map(lambda x : self.replace_special(x), words)
         words = filter((lambda x : x not in Stop_List), words)
+        print words
         return words
-
-    def tokenize_random_tweet(self):
-        """
-        If the twitter library is installed and a twitter connection
-        can be established, then tokenize a random tweet.
-        """
-        try:
-            import twitter
-        except ImportError:
-            print "Apologies. The random tweet functionality requires the Python twitter library: http://code.google.com/p/python-twitter/"
-        from random import shuffle
-        api = twitter.Api()
-        tweets = api.GetPublicTimeline()
-        if tweets:
-            for tweet in tweets:
-                if tweet.user.lang == 'en':            
-                    return self.tokenize(tweet.text)
-        else:
-            raise Exception("Apologies. I couldn't get Twitter to give me a public English-language tweet. Perhaps try again")
 
     def __html2unicode(self, s):
         """
-        Internal metod that seeks to replace all the HTML entities in
+        Internal method that seeks to replace all the HTML entities in
         s with their corresponding unicode characters.
         """
         # First the digits:
@@ -269,11 +251,10 @@ class Tokenizer:
         return word.lower()
         
     @classmethod        
-    def read_stopword_list(self, file_name='en.txt', root_dir='~/tweeting_crime/test_data/StopwordsList'):     
+    def read_stopword_list(self, file_name='en.txt', root_dir='~/twitter/test_data/StopwordsList'):     
         with open(os.path.join(os.path.expanduser(root_dir), file_name)) as f:
             global Stop_List 
             Stop_List = [line.rstrip() for line in f]
-
 
 class NGram_Helpers:   
     
@@ -282,8 +263,6 @@ class NGram_Helpers:
     forum_three_dict = {}
     forum_two_dict = {}
     forum_one_dict = {}
-
-    METHOD_NAME = { 'PARSE':0, 'TOKENIZE':1, 'SPLIT':2, 'COUNT':3, 'HASH':4, 'REPLACE':5 }
         
         
     def __init__(self,samples):
@@ -309,7 +288,7 @@ class NGram_Helpers:
     def build_forum(self, samples, num, method_name):
         self.clear_dicts()
         parsed = []
-        if method_name == self.METHOD_NAME.get('COUNT'):
+        if method_name == METHOD_NAME.get('COUNT'):
             parsed = self.build_tweet(samples, num, 2)
             return parsed
         else:
@@ -317,26 +296,24 @@ class NGram_Helpers:
             self.forum_three_dict.update(self.count_gram(self.build_ngrams(parsed, num), self.forum_three_dict))
             self.forum_two_dict.update(self.count_gram(self.build_ngrams(parsed, num-1), self.forum_two_dict))
             self.forum_one_dict.update(self.count_gram(self.build_ngrams(parsed, num-2), self.forum_one_dict))  
-    
-    """
-    Method to return individual sentences, sorted by highest probability
-    """        
+
+    #Method to return individual sentences, sorted by highest probability --I think this needs to be removed    
     def test_data(self, samples, num, method_name):
         self.clear_dicts()
         parsed_sentence = []
         for s in samples:
-            parsed_sentence += self.build_tweet(samples, num, 4)
+            parsed_sentence += self.build_tweet(s, num, 4)
             
     @classmethod        
     def build_tweet(self, s, num, method_name):
         tokenized = []
         for i in range(0, num - 1):
             tokenized += ["*"]
-        if method_name == self.METHOD_NAME.get('TOKENIZE'):
+        if method_name == METHOD_NAME.get('TOKENIZE'):
             tokenized += tok.tokenize(s)
-        elif method_name == self.METHOD_NAME.get('PARSE'):
+        elif method_name == METHOD_NAME.get('PARSE'):
             tokenized += s.split()
-        elif method_name == self.METHOD_NAME.get('SPLIT'):
+        elif method_name == METHOD_NAME.get('SPLIT'):
             for single_line in s:
             	tokenized += single_line.split()
         tokenized += ["~STOP~"]  
@@ -465,23 +442,32 @@ class File_Utils:
             word = word[1:]
         return word
         
-    def parse_tsv_tweets(self, file_array, root_dir="~/Tweets", out_path='~/GeoTweets'):
+    def parse_tsv_tweets(self, file_array, root_dir="~/Tweets", out_path='~/GeoTweets', method_name=2):
+        i = 0
+        temp_filename = "temp.csv"
+        tweet_path = os.path.expanduser(root_dir)
+        out_path = os.path.expanduser(out_path)
         for file_name in file_array:
-            tweet_path = os.path.expanduser(root_dir)
-            out_path = os.path.expanduser(out_path)
-            with open(os.path.join(tweet_path, file_name),'rb') as tsvin, open(os.path.join(out_path, file_name), 'wb') as csvout:
-                tsvin = csv.reader((line.replace('\0','') for line in tsvin), delimiter='\t')
-                csvout = csv.writer(csvout, delimiter='\t')
-                
-                for row in tsvin:
-                    k = self.split_tweets_tsv(row)
-                    print len(k)
-                    if len(k)== 5:
-                        k.append(self.tweet_pr(k[4]))
-                        print k[5]
-                        print k[2]
-                        csvout.writerows([k])
-                
+            os.rename(os.path.join(tweet_path, file_name), os.path.join(tweet_path, temp_filename))
+            if method_name == METHOD_NAME.get('SPLIT'):
+                with open(os.path.join(tweet_path, temp_filename),'rb') as tsvin, open(os.path.join(out_path, file_name), 'wb') as csvout:
+                    tsvin = csv.reader((line.replace('\0','') for line in tsvin), delimiter='\t')
+                    csvout = csv.writer(csvout, delimiter=',')
+                    for row in tsvin:
+                        k = self.split_tweets_tsv(row)
+                        if len(k)== 5:
+                            k.append(self.tweet_pr(k[4]))
+                            csvout.writerows([k])
+                                
+            elif method_name == METHOD_NAME.get('REPLACE'):
+                with open(os.path.join(tweet_path, temp_filename),'rb') as tsvin, open(os.path.join(out_path, file_name), 'wb') as csvout:
+                    tsvin = csv.reader((line.replace('\0','') for line in tsvin), delimiter='\t')
+                    csvout = csv.writer(csvout, delimiter=',')
+                    for row in tsvin:
+                        row[5] = self.tweet_pr(row[4])
+                        file_name = str(row[5]) + " " + str(i) + ".csv"
+                        csvout.writerows([row])
+                        
     def split_tweets_tsv(self, tweet):
         temp = []
         ret = []
@@ -494,9 +480,9 @@ class File_Utils:
                 else:
                     ret = ["null"]       
         return ret
-        
+    @classmethod    
     def tweet_pr(self, tweet):
-        tweet = tweet.encode("utf-8")
+        tweet = tweet.encode("utf-8") 
         pr = 0
         st_pr = 0
         ngram_base = NGram_Helpers.build_tweet(tweet, 3, 1)
@@ -508,10 +494,10 @@ class File_Utils:
         count_3_list = NGram_Helpers.pr_gram(lineThreeGram, tri_gram)
         count_2_list = NGram_Helpers.pr_gram(lineTwoGram, duo_gram[:len(tri_gram)])
         count_1_list = NGram_Helpers.pr_gram(lineOneGram, uno_gram[:len(tri_gram)])
-        if len(count_3_list[0]) > 0:
-            st_pr = NGram_Helpers.start_probability(count_3_list[0], count_2_list[0], L1, L4, length)
-        if len(count_3_list[1]) > 0:
-            pr = NGram_Helpers.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4, length)
+        #if len(count_3_list[0]) > 0:
+        st_pr = NGram_Helpers.start_probability(count_3_list[0], count_2_list[0], L1, L4, length)
+        #if len(count_3_list[1]) > 0:
+        pr = NGram_Helpers.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4, length)
         if st_pr != 0.0 and pr != 0.0:
             pr = st_pr * pr
         return pr
@@ -526,20 +512,20 @@ class File_Utils:
                     temp += [s]            
         return temp
         
-    def write_json(self, term_doc_matrix, file_name, root_dir='~/forumPost'):
+    def write_json(self, term_doc_matrix, file_name, root_dir='~/twitter/test_data/forumPost'):
         tweet_path = os.path.expanduser(root_dir)
         with open(os.path.join(tweet_path, file_name), 'w') as outfile:
             h = json.JSONEncoder().encode(term_doc_matrix)
             json.dump(h, outfile, ensure_ascii=False)
         
-    def read_json(self, file_name, root_dir="~/forumPost"):        
+    def read_json(self, file_name, root_dir="~/twitter/test_data/forumPost"):        
         tweet_path = os.path.expanduser(root_dir)
         with open(os.path.join(tweet_path, file_name)) as f:
             d = json.load(f)
             d = json.JSONDecoder().decode(d)
         return d
         
-    def write_prob_csv(self, sentence, file_name, root_dir='~/forumPost'):
+    def write_prob_csv(self, sentence, file_name, root_dir='~/twitter/test_data/forumPost'):
         write_path = os.path.expanduser(root_dir)
         writer = csv.writer(open(os.path.join(write_path, file_name), 'wb'))
         #sort ordered dict highest to lowest probability
@@ -547,6 +533,38 @@ class File_Utils:
         items.reverse()
         for key, value in sentence.items():
             writer.writerow([key, value])
+            
+class Live_Tweet:
+    def tokenize_live_tweet(self, client):
+        consumer_key = ''
+        consumer_secret = ''
+        access_token = ''
+        access_secret = ''
+        auth = OAuthHandler(consumer_key, consumer_secret)
+        auth.set_access_token(access_token, access_secret)
+        stream = Stream(auth, client)
+        stream.filter(locations=[-125.3,25.1,-66.9,48.6])
+ 
+class Live_Client(StreamListener):
+    @classmethod
+    def on_data(self, data):
+        #print data
+        jsonized_tweet = json.loads(data)
+        decoded_tweet = json.JSONDecoder().decode(data)
+        print decoded_tweet['id']
+        print decoded_tweet['created_at']
+        print decoded_tweet['text']
+        print decoded_tweet['user']['name']
+        print decoded_tweet['user']['location']
+        print File_Utils.tweet_pr(decoded_tweet['text'])
+        return True
+
+    @classmethod
+    def on_error(self, status):
+        print status
+
+    
+            
 
 ###############################################################################
 
@@ -564,29 +582,32 @@ if __name__ == '__main__':
     L4 = 0.01
     st_pr = 0.0
     
-    geo_tweet_path = '~/GeoTweets'
-    orig_tweet_path = '~/Tweets'
-    out_path = '~/tweeting_crime/test_data/ForumsPreparedData/forumPost'
-    run_test_out_path = '~/tweeting_crime/test_data/ForumsSimpleResultData'
-    run_test_path = '~/tweeting_crime/test_data/ForumsSimpleTestData'
-    test_path = '~/tweeting_crime/test_data/ForumsPreparedData/testData'
-    training_dir1 = '~/tweeting_crime/test_data/ForumsPreparedData/forum1'
-    training_dir2 = '~/tweeting_crime/test_data/ForumsPreparedData/forum2'
-    stopword_dir = '~/tweeting_crime/test_data/StopwordsList/en.txt'        
+    geo_tweet_path = '~/twitter/test_data/GeoTweets'
+    orig_tweet_path = '~/twitter/test_data/Tweets'
+    out_path = '~/twitter/test_data/ForumsPreparedData/forumPost'
+    run_test_out_path = '~/twitter/test_data/ForumsSimpleResultData'
+    run_test_path = '~/twitter/test_data/ForumsSimpleTestData'
+    run_test_tweet_path = '~/twitter/test_data/'
+    test_path = '~/twitter/test_data/ForumsPreparedData/testData'
+    training_dir1 = '~/twitter/test_data/ForumsPreparedData/forum1'
+    training_dir2 = '~/twitter/test_data/ForumsPreparedData/forum2'
+    stopword_dir = '~/twitter/test_data/StopwordsList/en.txt'      
     
     parser = argparse.ArgumentParser(description=
         "Train (tr), test (te), clean (c) models. Clean Twitter short texts(tc).Run tests (rt)")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-c", "--clean", action="store_true")
     group.add_argument("-cli", "--cli", action="store_true")
+    group.add_argument("-lt", "--live_tweet", action="store_true")
     group.add_argument("-tr", "--train", action="store_true")
     group.add_argument("-tc", "--tweet_clean", action="store_true")
+    group.add_argument("-trc", "--tweet_recalculate", action="store_true")
     group.add_argument("-te", "--test", action="store_true")
     group.add_argument("-rt", "--run_test", action="store_true")   
     args = parser.parse_args()
     
     if args.clean: 
-        #Section to clean data  
+        #clean data  
         file_group = fi.crawl_directory(training_dir1)
         fi.gather(file_group,training_dir1)
         file_group2 = fi.crawl_directory(training_dir2)
@@ -599,12 +620,11 @@ if __name__ == '__main__':
         #Section to create training data
         file_group = fi.crawl_directory(training_dir1)
         file_group2 = fi.crawl_directory(training_dir2)
-   
+        Tokenizer.read_stopword_list()
         samples += fi.create_samples(file_group,training_dir1)
         samples += fi.create_samples(file_group2,training_dir2) 
     
         samples = fi.remove_punct(samples)
-        print samples
         n = NGram_Helpers(samples)
         fi.write_json(n.trigrams, "threeGram.json")
         fi.write_json(n.bigrams, "twoGram.json")
@@ -612,12 +632,13 @@ if __name__ == '__main__':
         #end section to create training data
         
     elif args.test:
-        #Section to find prob of individual sentences from test data
+        #section to find prob of individual sentences from test data
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
 
         forum_samples = fi.crawl_directory(test_path)
+        Tokenizer.read_stopword_list()
         posts += fi.create_samples(forum_samples, test_path)
         #print posts
         forum_samples = fi.remove_punct(posts)
@@ -632,10 +653,10 @@ if __name__ == '__main__':
             count_3_list = n.pr_gram(lineThreeGram, tri_gram)
             count_2_list = n.pr_gram(lineTwoGram, duo_gram[:len(tri_gram)])
             count_1_list = n.pr_gram(lineOneGram, uno_gram[:len(tri_gram)])
-            if len(count_3_list[0]) > 0:
-                st_pr = n.start_probability(count_3_list[0], count_2_list[0], L1, L4, length)
-            if len(count_3_list[1]) > 0:
-                pr = n.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4, length)
+            #if len(count_3_list[0]) > 0:
+            st_pr = n.start_probability(count_3_list[0], count_2_list[0], L1, L4, length)
+            #if len(count_3_list[1]) > 0:
+            pr = n.probability(count_3_list[1], count_2_list[1], count_1_list[1], L1, L2, L3, L4, length)
             if st_pr != 0.0 and pr != 0.0:
                 pr = st_pr * pr
             prob[f] = pr
@@ -643,16 +664,24 @@ if __name__ == '__main__':
         #end test data section
         
     elif args.tweet_clean:
-        # Section to separate tweets by Geolocation and return only US tweets
+        # Section to separate tweets by Geolocation and return only US tweets and their probabilities
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
+        Tokenizer.read_stopword_list()
         file_group = fi.crawl_directory(orig_tweet_path)
-        fi.parse_tsv_tweets(file_group, out_path=geo_tweet_path)
+        fi.parse_tsv_tweets(file_group, out_path=geo_tweet_path,method_name=2)
         #end section to return US tweets
         
+    elif args.tweet_recalculate:
+        lineThreeGram = fi.read_json("threeGram.json")
+        lineTwoGram = fi.read_json("twoGram.json")
+        lineOneGram = fi.read_json("oneGram.json") 
+        Tokenizer.read_stopword_list()
+        file_group = fi.crawl_directory(geo_tweet_path)
+        fi.parse_tsv_tweets(file_group, root_dir=geo_tweet_path, out_path=geo_tweet_path,method_name=5)
+        
     elif args.run_test:
-        #Section to run simple tests on sample data
         file_group = fi.crawl_directory(run_test_path)
         Tokenizer.read_stopword_list()
         fi.gather(file_group,run_test_path)
@@ -663,18 +692,20 @@ if __name__ == '__main__':
         fi.write_json(n.trigrams, "threeGram.json", run_test_out_path)
         fi.write_json(n.bigrams, "twoGram.json", run_test_out_path)
         fi.write_json(n.unigrams, "oneGram.json", run_test_out_path)
-        #end section to run simple tests on sample data
-        
-    
-    
+        fi.parse_tsv_tweets(file_group, out_path=run_test_tweet_path)
    
+    elif args.live_tweet:
+        lineThreeGram = fi.read_json("threeGram.json")
+        lineTwoGram = fi.read_json("twoGram.json")
+        lineOneGram = fi.read_json("oneGram.json") 
+        Tokenizer.read_stopword_list()
+        l = Live_Client()
+        k = Live_Tweet()
+        k.tokenize_live_tweet(l)
     """
-    
     #ask for user input
-    
-    #test with tweets and find average
 
-    # use words not on stopword list
-
-
+    #use words not in stopword list
+    #upload to github
+    """
     
