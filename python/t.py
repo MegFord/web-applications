@@ -563,9 +563,7 @@ class Live_Client(StreamListener):
     @classmethod
     def on_error(self, status):
         print status
-
-    
-            
+           
 
 ###############################################################################
 
