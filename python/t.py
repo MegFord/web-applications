@@ -606,7 +606,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     if args.clean: 
-        #clean data  
+        #Section to clean data  
         file_group = fi.crawl_directory(training_dir1)
         fi.gather(file_group,training_dir1)
         file_group2 = fi.crawl_directory(training_dir2)
@@ -631,7 +631,7 @@ if __name__ == '__main__':
         #end section to create training data
         
     elif args.test:
-        #section to find prob of individual sentences from test data
+        #Section to find prob of individual sentences from test data
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
@@ -663,7 +663,7 @@ if __name__ == '__main__':
         #end test data section
         
     elif args.tweet_clean:
-        # Section to separate tweets by Geolocation and return only US tweets and their probabilities
+        #Section to separate tweets by Geolocation and return only US tweets and their probabilities
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
@@ -673,14 +673,17 @@ if __name__ == '__main__':
         #end section to return US tweets
         
     elif args.tweet_recalculate:
+        #Section to recalculate probabilities for tweets based on new trainign data
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
         Tokenizer.read_stopword_list()
         file_group = fi.crawl_directory(geo_tweet_path)
         fi.parse_tsv_tweets(file_group, root_dir=geo_tweet_path, out_path=geo_tweet_path,method_name=5)
+        #end section to recalculate probabilities for tweets based on new trainign data
         
     elif args.run_test:
+        #Section to test functionality with toy data set
         file_group = fi.crawl_directory(run_test_path)
         Tokenizer.read_stopword_list()
         fi.gather(file_group,run_test_path)
@@ -692,8 +695,10 @@ if __name__ == '__main__':
         fi.write_json(n.bigrams, "twoGram.json", run_test_out_path)
         fi.write_json(n.unigrams, "oneGram.json", run_test_out_path)
         fi.parse_tsv_tweets(file_group, out_path=run_test_tweet_path)
+        #end section to test functionality with toy data set
    
     elif args.live_tweet:
+        #Section to return probabilities of US tweets from live stream
         lineThreeGram = fi.read_json("threeGram.json")
         lineTwoGram = fi.read_json("twoGram.json")
         lineOneGram = fi.read_json("oneGram.json") 
@@ -701,6 +706,7 @@ if __name__ == '__main__':
         l = Live_Client()
         k = Live_Tweet()
         k.tokenize_live_tweet(l)
+        #end section to return probabilities of US tweets from live stream
     """
     #ask for user input
 
